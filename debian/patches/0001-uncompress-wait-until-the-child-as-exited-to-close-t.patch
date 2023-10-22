@@ -1,0 +1,143 @@
+Origin: upstream, 6a8ac062c49093ad33689754558e626851070e61
+From: Simon Chopin <schopin@ubuntu.com>
+Date: Wed, 1 Mar 2023 17:53:28 +0100
+Subject: uncompress: close the pipe after the child exits (LP: #2008508)
+
+Since we sometimes interrupt the decompression mid-stream as we're only
+looking for specific data, e.g. the control file in control.tar.zstd, it
+can happen that the child process still has a backlog of data to write
+out to the pipes before exiting. If we close its stdout pipe before
+calling waitpid(), it's going to encounter an EPIPE rather than
+gracefully exit.
+
+The fix is to only close the pipe fd after waitpid() successfully exits.
+
+However, that introduces a new theoretical issue: the child process could
+be blocking while writing into its stdout if the pipe is full, thus
+leading to a deadlock. To avoid this, we have to drain the pipe before
+waiting. Technically this should probably be done in a loop, but since
+it's fairly unlikely to be blocked on stdout in the first place, having
+enough pending data to fill the pipe *twice* seems too rare to bother
+with in the first place.
+
+The initial problem has first been noticed in Ubuntu autopkgtests on
+s390x when upgrading to libarchive 3.6.2, where unzstd would loudly
+complain about an -EPIPE (Ubuntu is using zstd as its default
+compression algorithm). After investigation, it could be consistently
+reproduced on low-powered s390x VMs with older libarchive releases,
+where only the initial invocation would succeed, but subsequent attempts
+would fail, presumably due performance changes via caching?
+
+To reproduce the issue more reliably, I used the following Rust code to
+produce a "proxy" unzstd that I dropped in /usr/local/bin. The output is
+the same, but only written 1kB at a time with 500ms pauses.
+
+```rust
+use std::io::{Read, Write};
+use std::process::{Command, Stdio};
+
+fn main() {
+    let mut child = Command::new("zstd")
+        .arg("-d")
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Failed to spawn the command");
+    let mut stdout = child.stdout.take().unwrap();
+    let mut buffer = [0u8; 1024];
+    loop {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        let size = stdout.read(&mut buffer).unwrap();
+        if size > 0 {
+            std::io::stdout().write_all(&buffer[0..size]).unwrap();
+            std::io::stdout().flush().unwrap();
+            continue;
+        }
+        if let Some(status) = child.try_wait().unwrap() {
+            std::process::exit(status.code().unwrap())
+        }
+    }
+}
+```
+
+(to compile it: `rustc unzstd.rs`)
+
+Due to the Debian freeze, we'll probably ship this patch in Ubuntu as a
+delta.
+
+Signed-off-by: Simon Chopin <schopin@ubuntu.com>
+---
+ uncompression.c | 35 +++++++++++++++++++++++++++++++----
+ 1 file changed, 31 insertions(+), 4 deletions(-)
+
+diff --git a/uncompression.c b/uncompression.c
+index 43819ae..1087b0b 100644
+--- a/uncompression.c
++++ b/uncompression.c
+@@ -1422,12 +1422,34 @@ int uncompress_read(struct compressedfile *file, void *buffer, int size) {
+ 	}
+ }
+ 
++static inline retvalue drain_pipe_fd(struct compressedfile *file, int *errno_p, const char **msg_p) {
++	int e = 0;
++	struct pollfd pollfd = {
++		file->fd,
++		POLLIN,
++		0
++	};
++	unsigned char buffer[4096] = {};
++	while ((e = poll(&pollfd, 1, 0)) > 0) {
++		e = read(file->fd, buffer, 4096);
++		if (e <= 0)
++			break;
++	}
++	if (e < 0) {
++		*errno_p = e;
++		*msg_p = strerror(file->error);
++		return RET_ERRNO(e);
++	}
++	return RET_OK;
++}
++
+ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p, const char **msg_p) {
+ 	retvalue result;
+ 	int ret;
+ 	int e;
+ 	pid_t pid;
+ 	int status;
++	int output_fd;
+ #define ERRORBUFFERSIZE 100
+ 	static char errorbuffer[ERRORBUFFERSIZE];
+ 
+@@ -1436,15 +1458,19 @@ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p
+ 
+ 	if (file->external) {
+ 		free(file->intermediate.buffer);
+-		(void)close(file->fd);
+ 		if (file->pipeinfd != -1)
+ 			(void)close(file->pipeinfd);
++		// Drain the child's stdout in the unlikely case it's blocking on it
++		e = drain_pipe_fd(file, errno_p, msg_p);
++		if (e != RET_OK)
++			return e;
++		output_fd = file->fd;
+ 		file->fd = file->infd;
+-		file->infd = -1;
+ 		result = RET_OK;
+-		if (file->pid <= 0)
++		if (file->pid <= 0) {
++			(void)close(output_fd);
+ 			return RET_OK;
+-		pid = -1;
++		}
+ 		do {
+ 			if (interrupted()) {
+ 				*errno_p = EINTR;
+@@ -1454,6 +1480,7 @@ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p
+ 			pid = waitpid(file->pid, &status, 0);
+ 			e = errno;
+ 		} while (pid == -1 && (e == EINTR || e == EAGAIN));
++		(void)close(output_fd);
+ 		if (pid == -1) {
+ 			*errno_p = e;
+ 			*msg_p = strerror(file->error);

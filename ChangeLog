@@ -1,0 +1,2247 @@
+2022-07-14  Bastian Germann <bage@debian.org>
+
+	Continue ceased upstream development
+
+	* ChangeLog: Add some missing entries
+	* NEWS: Mention major 5.3.1 work
+	* configure.ac: Release existing patches as 5.3.1
+	* configure.ac: Drop Bernhard's email as bug address;
+	Thanks for all the work making reprepro a stable repo tool!
+
+2021-06-18  Dimitri John Ledkov <dimitri.ledkov@canonical.com>
+	* Add Zstd support
+
+2021-06-15  Dimitri John Ledkov <dimitri.ledkov@canonical.com>
+	* Bump up the maxsize on a fixed-size C buffer
+	* Flush stdout, stderr before calling endhook.
+
+2019-08-04  Bernhard R. Link <brlink@debian.org>
+	* fix manpage to add the behaviour if reprepro is linked against liblzma
+	* adopt testsuite and more places in documentation to the non-deprecated list of --export values
+	* remove no longer needed warning suppressing code
+	* mark 'dumpcontents' command as deprecated
+
+2019-02-02 Bernhard R. Link <brlink@debian.org>
+	* fix more spelling errors
+	* fix some spelling errors in comments
+	* fix some spelling errors in the manpage
+	* handle a missing Binary field in a .changes file like an empty one.
+	  (So not having one in a source only upload will be ignored,
+	  while a missing one in a binary upload will complain about the
+	  packages not listed in Binary: instead of complaining about not
+	  having a Binary field).
+
+2018-09-23  Bernhard R. Link <brlink@debian.org>
+	* check command no longer checks if the files
+	  of existing packages are names as they are
+	  expected to be named. (There was no way to
+	  get them wrong apart editing the database and
+	  checking it makes the code more complex).
+
+2018-08-26 Bernhard R. Link <brlink@debian.org>
+	* mark .lz support as deprecated
+
+2018-08-12 Bernhard R. Link <brlink@debian.org>
+	* allow to set Signed-By header via conf/distributions
+	* add _listcodenames command (based on work from Benjamin Drung)
+	* drop "FILE LOCATION" headers from Contents files
+	* multiple manpage fixes
+	  (thanks to Paul Wise, Simon Kainz, Christoph Biedl)
+
+2017-03-02  Bernhard R. Link <brlink@debian.org>
+	* handle .asc files in source files better
+	  (thanks to Marc Laue)
+
+2017-01-31 <flapflap@riseup.net>
+	* allow '+' character in method-URI
+
+2016-12-28  Bernhard R. Link <brlink@debian.org>
+	* improve error handling when extracting .deb file contents
+
+2016-12-23  Bernhard R. Link <brlink@debian.org>
+	* properly report errors of the internal xz and lzma decompressors
+	* when using the builtin .xz uncompressor,
+	  support concatenated streams
+	* when using the builtin .gz uncompressor,
+	  support concatenated streams
+
+2016-12-22  Bernhard R. Link <brlink@debian.org>
+	* add unreferencesnapshot and removereference commands
+	* document --export=silent-never
+	* when using the builtin .bz2 uncompressor,
+	  support concatenated streams
+
+2016-12-21  Bernhard R. Link <brlink@debian.org>
+	* fix behaviour of (Deb|Dsc)Indices without a Release file
+	  (if no Release filename was given the default was used
+	   instead of not creating a file)
+	* document what is needed to use --ask-passphrase with newer
+	  gnupg versions in the manpage
+
+2016-12-21  Bernhard R. Link <brlink@debian.org>
+	* add support for .buildinfo files in .changes files:
+	- new tracking mode includebuildinfos to store them in pool/
+	- ignored by 'include' unless Tracking: includebuildinfos
+	- processincoming with LogDir set stores them like log files
+	- otherwise ignored by 'processincoming' if not used
+	- new Cleanup: unused_buildinfo_files for conf/incoming to
+	  remove used buildinfo files.
+
+2016-12-18  Bernhard R. Link <brlink@debian.org>
+	* fix some logical errors in some warnings.
+
+2016-10-22  Bernhard R. Link <brlink@debian.org>
+	* drop workaround for apt-method interface change:
+	  answer 103 is now always expected to end the method's doing
+	  (in other words the http apt method from squeeze and before is no
+	  longer supported)
+
+2016-03-*  Bernhard R. Link <brlink@debian.org>
+	* refactor code to use struct package and struct package_cursor
+	  most of the time package data is accessed.
+
+2016-03-13  Bernhard R. Link <brlink@debian.org>
+	* fix bug in flood that could get confused which binary package
+	  belongs to which source if a destination contains packages
+	  belonging to different versions of the same souce.
+	* fix bug in the message about "warning" triggered in FilterList
+	  of pull. ('(null)' was printed instead of the package name).
+
+2015-12-28  Bernhard R. Link <brlink@debian.org>
+	* fix duplicated --keeptemporaries description in manpage
+	* add Permit: unlisted_binary for conf/incoming
+	* if encountering a -dbgsym package in a .changes file, check the name
+	without -dbgsym in the Binary: header instead
+
+2015-06-13  Bernhard R. Link <brlink@debian.org>
+	* add Exportoptions: to conf/distributions,
+	  allowing to give "noexport" to never export a distribution.
+
+2015-05-09  Bernhard R. Link <brlink@debian.org>
+	* ignores lines starting with '#' in filterlists
+	* fix error parsing control files with multiple spaces/tabs after a colon
+
+2014-11-12  Bernhard R. Link <brlink@debian.org>
+	* fix segfault when verbose exporting with .xz indices
+
+2014-08-24  Bernhard R. Link <brlink@debian.org>
+	* fix DownloadListsAs not accepting .lz
+	* add support for unpacking .xz and .lzma files with liblzma
+	  instead of calling unxz and unlzma.
+	* default to linking with liblzma if no --with or --without is given
+
+2014-08-16  Bernhard R. Link <brlink@debian.org>
+	* rename the old python pdiff implementation example script
+	  from tiffany.example to pdiff.example and make it use python3.
+
+2014-06-28  Bernhard R. Link <brlink@debian.org>
+        * fix compiling without liblzma.
+	* disable liblzma usage unless explicitly requested
+	  (to avoid the double-dependency to liblzma un lzma-utils).
+
+2014-06-14  Bernhard R. Link <brlink@debian.org>
+	* add xz.example to script to generate Packages.gz
+	* improve multiple_distributions description in manpage
+
+2014-06-03  Bernhard R. Link <brlink@debian.org>
+        * multiple fixes to the outsftphook example
+
+2014-05-10  Bernhard R. Link <brlink@debian.org>
+	* add support for linking against liblzma
+	  and generating .xz Indices.
+	  (no changes to decompressing code yet, that still
+	   needs xzcat available)
+
+2014-03-18  Bernhard R. Link <brlink@debian.org>
+	* update ignore source packages with ExtraSourceOnly by default,
+	unless the new OmitExtraSourceOnly option is set in conf/updates
+	to false.
+	* fix override mechanism of .udeb files
+
+2014-02-12 Lukas Anzinger <l.anzinger@gmail.com>
+	* add _addreferences to add multiple references at once
+
+2014-02-11  Bernhard R. Link <brlink@debian.org>
+	* improve the errormessage of processincoming if the inclusion of a
+	package is forbidden by uploaders files.
+
+2013-11-21  Bernhard R. Link <brlink@debian.org>
+	* automatically add long Descriptions when updating from a source that
+	  does not have them in the Packages files.
+
+2013-10-05  Bernhard R. Link <brlink@debian.org>
+	* fix docs/outstore.py to work with newer python3 dbm behaviour
+	* more strict checking of all size information in .changes files
+
+2013-06-15  Bernhard R. Link <brlink@debian.org>
+	* use libarchive_read_free instead of libarchive_read_finish
+	  with newer libarchive to avoid issues with future versions.
+	* repairdescriptions also repairs udeb descriptions
+
+2013-06-15  Bernhard R. Link <brlink@debian.org>
+	* make reprepro compile with libdb6.0
+
+2013-06-02  Bernhard R. Link <brlink@debian.org>
+	* as gcc got better, remove conditional workarounds for
+	  most uninitialized-false-positives and make the remaining
+	  cases unconditonal (but marked with SETBUTNOTUSED).
+
+2013-05-30  Bernhard R. Link <brlink@debian.org>
+	* fix bug is restore to only act if the
+	  last package looked at is restored.
+
+2013-05-04  Bernhard R. Link <brlink@debian.org>
+	* build-needing properly handles sources with
+	  architecture wildcards (linux-any) in them.
+
+2013-04-12  Bernhard R. Link <brlink@debian.org>
+	* fix percomponent udeb Contents filenames
+
+2013-02-17  Bernhard R. Link <brlink@debian.org>
+	* add outsftphook.py example
+
+2012-12-31  Bernhard R. Link <brlink@debian.org>
+	* add --outhook
+
+2012-12-20  Bernhard R. Link <brlink@debian.org>
+	* fix inconsistent spacing of ls command,
+	* fix --nothingiserror ls not treating no result as error
+	* add lsbycomponent command (as ls, but grouped by component)
+
+2012-12-15  Bernhard R. Link <brlink@debian.org>
+	* move around some of the code related to moving
+	  (In)Release(.gpg) to it's final place. Side effect
+	  is that those files are removed if there are no longer
+	  requested.
+
+2012-12-09  Bernhard R. Link <brlink@debian.org>
+	* unify export handling (moving it out of the
+	  action specific code)
+
+2012-12-02  Bernhard R. Link <brlink@debian.org>
+	* keep around relative release filenames always
+
+2012-11-24  Bernhard R. Link <brlink@debian.org>
+	* make setting of environment variables for
+	  hooks more uniform (and with less code duplication).
+
+2012-11-17  Bernhard R. Link <brlink@debian.org>
+	* '~/' or '+{b,o,c}/' or './' now also special
+	 in ByHandHooks and ListHook.
+	* add support for signing hooks (SignWith: !...)
+
+2012-11-11  Bernhard R. Link <brlink@debian.org>
+	* add --endhook to start a script when terminating
+
+2012-11-04  Bernhard R. Link <brlink@debian.org>
+	* add repairdescriptions command to readd  missing long
+	  descriptions (which you might get as reprepro cannot yet
+	  get Translations files and get them from there)
+	  from the .deb files.
+
+2012-10-30  Bernhard R. Link <brlink@debian.org>
+	* add ${$basename}, ${$filekey} and ${$fullfilename} to --listformat
+	* fix some bitrot in the non-libarchive code paths
+
+2012-10-21  Bernhard R. Link <brlink@debian.org>
+	* reject absurd large values in ValidFor header
+	* fix wrong include type in termdecide.h
+
+2012-09-03
+	* fix overlong VerifyRelease example in manual.html
+
+2012-07-12
+	* add 'deleteifunreferenced' command to safely delete
+	  and forget the given files in a repository with
+	  keepunreferencedfiles set.
+
+2012-07-11
+	* fix bug in checking old unchanged {Packages/Sources}.bz2
+	  files for existence. (Triggering even an assertion when
+	  only .bz2 index files are requested).
+	* ignore diff comments about unterminated lines
+	  when parsing .diff files
+
+2012-06-24
+	* support http-method's extended 103 redirect status
+	* actually set REPREPRO_CONFIG_DIR in hooks as
+	  documented in manpage.
+	* document more environment variables in manpage
+
+2012-06-07
+	* fix bash and zsh completion to work with
+	  conf/distributions and conf/incoming directories.
+	* fix allocation error with more than 16 group
+	  members in allocation files.
+
+2012-05-30
+	* add support for -A, -C, -T to *update and *pull.
+
+2012-05-22
+	* try to get InRelease from remote repositories
+	  instead of Release (with fall-back of the old behaviour)
+	* new GetInRelease: to conf/updates, defaults to yes
+
+2012-05-21
+	* fix some errors when compiled without libgpgme
+
+2012-05-20
+	* normalize included package control information to
+	  always start with the Package: field (as some clients
+	  assume that).
+	* don't require md5sum to download binary or source packages
+	  in the remote index files (any known hash suffices)
+
+2012-05-19
+	* avoid some problem with gcc-4.7
+
+2012-04-24
+	* change Contents-* files generation default from
+	"allcompontents" to "percomponent compatsymlink".
+	(i.e. best for >= wheezy, only first component visible for
+	 <= squeeze)
+
+2012-04-04
+	* 'include' now only warns about section "unknown" instead of
+	rejecting it. add warnings to 'includedsc' and 'includedeb', too.
+
+2012-03-26
+	* allow absolute filenames in !include directives, and
+	  expand filenames starting with "~/" "+b/" "+c/" in those
+	  and export hooks, filter lists, log scripts, override filenames,
+	  and uploaders filenames.
+	* conf/distributions, conf/updates, conf/pulls and conf/incoming
+	  or files included by those can be directories with all *.conf
+	  files read instead.
+
+2012-03-25
+	* changelogs.example can now also place changelogs in places
+	  where apt-get changelog looks for "third party site" changelogs.
+	* add 'supersede' as FilterList keyword to remove the old package
+	  if the the new would be installed otherwise.
+	* fix broken test against leading whitespace in config file
+	  field names
+	* add support for !include directive in conf/distributions,
+	  conf/updates, conf/pulls and conf/incoming.
+
+2012-01-23
+	* reject "any" as Architecture part of a distribution
+
+2012-01-21
+	* build-needing now can list missing architecture 'all'
+	  packages. (Will not list .dsc files producing both
+	  architecture dependent and architecture indepentent ('all')
+	  packages unless they are built with dpkg-dev >= 1.16.1,
+	  though).
+
+2012-01-19
+	* build-needing takes 'any' instead of a architecture, too.
+	* uploader files can 'include' other files.
+
+2012-01-17
+	* improve config file parser error messages about missing fields
+
+2010-12-18
+	* rredtool: produce .diff/Index files that reprepro can understand.
+	* warn if uploader files contains key ids too long to handle
+	* don't warn against .git files as unknown extension
+
+2010-12-09
+	* if failing to parse .diff/Index, proceed with other
+	  ways to retrieve Packages/Sources.
+
+2010-10-30
+	* don't give spurious warnings about "strange filekey"s if
+	components contain slashes.
+
+2010-10-10
+	* fix NULL-reference segfault if patch in a Packages.diff
+	does not have a history attached to it (or if it is listed
+	two times)
+
+2010-10-03
+	* when using nocompatsymlink in Contents warn about
+	  old file/symlink still present.
+
+2010-09-28
+	* fix archive_set_error calls
+	  (don't give error messages as format strings)
+	* remove undocumented Contents: options with leading +/-
+	* add compatsymlink nocompatsymlink Contents: options
+	  (and document that the default will change in the future)
+
+2010-08-22
+	* add 'redochecksums' command to complete the checksum information
+	in package indices.
+
+2010-08-19
+	* add percomponent and allcomponents to Contents: flags
+	to switch between the format of Contents file to generate.
+	Currently the default is allcomponents but that will switch
+	later.
+	* fix bug that would delete files only to be deleted after an
+	successful export also when aborting an export
+
+2010-07-07
+	* don't give downgrading message if not downgrading but
+	  replacing with same version
+
+2010-06-02
+	* fix bug not deleting packages if none added in update
+
+2010-05-05
+	* ignore leading comments in control files
+
+2010-04-18
+	* add --restrict and --restrict-bin to restrict update
+	  and pull operations to specific packages.
+	* add --restrict-file and --restrict-file-bin.
+
+2010-04-17
+	* add --export=silent-never like never but silenting
+	  all warnings (mostly useful for testsuite).
+	* avoid 'Data seems not to be signed trying to use directly'
+	  message if data start like unsigned file should start.
+
+2010-04-16
+	* add 'FilterSrcList'.
+
+2010-04-15
+	* Many clean-ups and coding style fixes.
+
+2010-03-30
+	* Support specifying a version in FilterList
+
+2010-02-29
+	* support compiling with libdb5
+	* fix memory bug in filelist generation
+	  (as realloc usually not moves stuff when reducing the size that
+	   is no real issue, but newer valgrind detects it and warns).
+
+2010-02-28
+	* 'check' also checks if architectures match
+	* fix 'sourcemissing', 'unusedsources' and 'reportcruft'
+	  on distributions without tracking.
+	* fix 'pull' copying packages with wrong architecture
+
+2010-02-21
+	* support reading of Release files without MD5Sum
+	* add all missing Checksums-* when importing from
+	  remote repositories
+	* allow md5 in IgnoreHashes
+
+2010-02-16
+	* make 'sourcemissing', 'unusedsources' and 'reportcruft' work on
+	  distributions without tracking.
+
+2010-02-14
+	* add 'reportcruft' command
+	* ignore source checking in distributions without 'source' architecture
+
+2010-01-30
+	* add 'sizes' command.
+	* add "distribution 'codename'" support to uploaders files.
+	* some fixes for __checkuploaders
+
+2010-01-27
+	* SignWith can take multiple arguments to denote multiple keys to
+          sign a repository with.
+
+2010-01-22
+	* add removesrcs command (like removesrc but can get multiple
+	  source package names)
+
+2010-01-03
+	* add groups to Uploaders:-lists.
+	* add __checkuploaders command so uploaders lists can be tested
+	  from the test-suite
+
+2010-12-23
+	* fix some minor memory/resource leaks found by cppcheck
+
+2010-10-16
+       * support "ButAutomaticUpgrades" field to be copied to
+         the generated Release files (Thanks to Modestas Vainius)
+
+2010-10-15
+	* add support for lzip compressed files
+	(Thanks to Daniel Baumann for the patch).
+
+2010-09-10
+	* add special '$Delete' override field to delete fields
+
+2010-09-09
+	* fix reoverride problem with packages only having a $Component
+	  special-override-field.
+
+2010-08-12
+	* fix missing #ifdef breaking --without-libbz2 compiles
+	* include sys/stat.h in filecntl.c, thanks to Jeroen van Meeuwen
+
+2010-08-04
+	* add unusedsources and sourcemissing commands.
+
+2010-07-10
+	* create InRelease files when signing...
+
+2010-07-05
+	* special $Component in override files will force
+	placing packages in the specified component
+	upon inclusion (unless -C is given).
+
+2010-07-04
+	* consult override files when importing packages
+	with 'update' or 'pull'.
+
+2010-07-01
+	* fix inconsistency in changelog.example.
+	Thanks to Christoph Mathys.
+
+2010-06-30
+	* allow patterns in override files
+
+2010-06-29
+	* do not stop with error if a downloaded Packages
+	file contains unexpected wrong Architecture lines
+	but only print a warning. Add --ignore=wrongarchitecture
+	to not print that warning.
+
+2010-06-26
+	* store override data in a tree instead of an list and
+	some preparations for patterns in override files.
+
+2010-06-25
+	* Ignore overrides for fields starting with '$' and
+	warn about unknown fields to allow later introduction
+	of special values.
+	* disallow overrides of core fields (Package, Version,
+	Filename, ...)
+
+2010-05-07
+	* add --onlysmalldeletes option that cancels pulls
+	and updates that delete more than 20% of some target
+	(but at least 10 packages). The change also causes
+	update no longer claiming to get packages if there are
+	not any packages to get...
+
+2010-04-30
+	* change parsing of .changes lines to cope with
+	N_V.orig-X.tar.C files where V.orig-X does not survive
+	a proper version check (underscores most prominently).
+
+2010-04-23
+	* Fix typo causing --changes Log-notifiers not being called
+	with processincoming in many cases.
+
+2010-04-07
+	* add '${$source}' and '${$sourceversion}' to --list-format
+
+2010-03-31
+	* describe byhand file in the manpage's "nomenclature".
+
+2010-03-19
+	* add "dumbremove" to changestool.
+
+2010-02-10
+	* fix failure if trying to extract exactly one of
+	section or priority from a tar file.
+
+2010-01-24
+	* add ByHandHooks to conf/distributions for hooks
+	called by processincoming (and in the future perhaps by include)
+
+2010-01-18
+	* properly handle relative LogDir in conf/incoming
+
+2009-12-08
+	* add byhand statement to uploaders files
+
+2009-11-22
+	* fix build with --without-libgpgme
+	(thanks to Reto Gantenbein for reporting)
+
+2009-11-16
+	* include <stdint.h> where *int*_t is used
+
+2009-11-13
+	* 'include' now errors out early if the .changes includes source files but
+	no .dsc file.
+
+2009-11-12
+	* add mode to rredtool to act as reprepro index hook and generate
+	and update a *.diff/Index file.
+
+2009-11-06
+	* when 'include'ing a .changes file, do not insist on section
+	information of non-.dsc source files.
+
+2009-10-27
+	* Do not warn about a missing VerifyRelease if there is a
+	IgnoreRelease.
+	* Handle apt transport methods returning missing files as
+	success with alternate filename suggestion more gracefully.
+	* when getting packages from another architecture while updating,
+	ignore all packages with architecture not fitting into the target.
+	(Fixes a regression introduced in 3.8.0)
+2009-10-21
+	* reduce number of places where new compressions must be added
+	* improve checking for proper filenames in changestool's verify
+	* allow .build as synonym for .log as suffix in changes files
+
+2009-10-20
+	* reduce number of places where new compressions must be added
+
+2009-10-17
+	* support xz compressed files if unxz is installed.
+
+2009-10-02
+	* make 'check' (and some other commands) warn if a file expected
+	is not in the checksums database but found correctly in the pool.
+
+2009-09-23
+	* Method: and Fallback: in conf/updates now strip the last '/' from
+	the URI given. (Some apt methods get confused if they get "//").
+
+2009-09-15
+	* fix exit-code of 'list' with --nothingiserror
+
+2009-09-10
+	* call gpgme_check_version so that libgpgme 1.2.0 does not fail
+	to initialize.
+
+2009-08-24
+	* remove all files.db code (except translatelegacyfilelists).
+	* remove --oldfilesdb option.
+	* remove --overridedir
+
+2009-08-23
+	* warn if old legacy files.db is still used and add new
+	translatelegacyfilelists command for easier migration.
+
+2009-08-21
+	* new --showpercent option to show percent and total
+	download size when downloading packages.
+	* do not output the new warning about a new architecture
+	when all architectures are new (i.e. new distribution)
+
+2009-08-20
+	* new 'Options: limit_arch_all' in conf/incoming causes
+	processincoming to only put architecture all packages into
+	the architectures uploaded with them to allow usage together
+	with 'flood'.
+
+2009-08-18
+	* speed up 'flood' by using an tree instead of a list for source
+	package lookups.
+
+2009-08-17
+	* add new 'flood' command to distribute architecture all packages
+	within one architecture.
+
+2009-08-15
+	* -A, -T and -C can now have multiple arguments separated by '|'.
+
+2009-08-13
+	* FakeComponentPrefix now does not add the prefix to components
+	already having it and removes it from the relative directory where
+	it is put into (so no duplication on the whole path, either).
+
+2009-08-06
+	* command line (and conf/options) options to specify a directory
+	now treat arguments starting with '+b/', '+c/' or '+o/' as relative
+	to the basedir, confdir or outdir.
+	* warn if directories do not start with '/', './' or '+x/'.
+
+2009-08-05
+	* if a package is not accepted by processincoming because no
+	distribution is found for it or no distribution allows it, the
+	existcode is now 243
+
+2009-08-03
+	* add a MorgueDir option to conf/incoming where cleaned up files
+	are moved to.
+	* if a .changes has improper name, version or architectures,
+	trigger the 'Cleanup: on_error' case.
+
+2009-08-01
+	* improve deleteunreferenced's error message with keepunreferencedfiles
+
+2009-07-25
+	* add $Version, $Source, $SourceVersion, $Architecture, $Component,
+	$PackageType as special fields in formulas.
+
+2009-07-21
+	* fix build-needing to look at the correct Architecture field in
+	.dsc files.
+
+2009-07-20
+	* add an --morguedir where files removed from the pool are
+	stored.
+
+2009-07-15
+	* add --create-with-all-fields to changestool that is
+	like --create but also creates Urgency and Changes fields.
+
+2009-07-11
+	* make predelete also call retrack when needed,
+	  silence false warning of stale tracking by removesrc
+
+2009-07-10
+	* warn if a distribution with tracking is modified in a form tracking
+	data might get out of data. update and pull automatically cause a
+	retrack on distributions with tracking enabled.
+
+2009-07-09
+	* some more improvements to the build-needing command
+
+2009-07-07
+	* fix bug in processincoming not accepting Suite or AlsoAcceptFor
+	because of counting it two times and erroring out.
+	(Thanks to Wookey for finding this bug).
+
+2009-06-16
+	* add listmatched, removematched, copymatched and restorematched.
+	(For those who think listfilter 'Package (% glob)' is too hard
+	 to write, to remember or too slow).
+	* add build-needing command
+
+2009-06-05
+	* add glob-matching in formulas via '(% pattern)'
+	* uploaders list conditions that supported stars
+	  now use the generic globmatch (thus more stars and ? and []).
+
+2009-06-03
+	* new --list-max and --list-skip
+
+2009-06-02
+	* new 'architectures' condition for uploader lists and other
+	conditions support 'contains' now.
+
+2009-05-31
+	* add --list-format
+
+2009-05-29
+	* add _listdbidentifiers and _listconfidentifiers
+	* add condition "source 'something'" for uploader lists,
+	to limit a uploader to packages with the specified source.
+
+2009-05-22
+	* allow subkey matching in uploader lists, 'unsigned' now only
+	means unsigned while the new 'anybody' means everybody.
+	Preparations for more conditions.
+
+2009-05-12
+	* copy and copysrc give warnings about not found packages unless
+	  verbosity is reduced by --silent. (To help people catch their typos).
+
+2009-04-13
+	* rewrite Release.gpg verification code:
+	- to allow usage of expired or revoced keys, the key-id
+	  in VerifyRelease has to be appended with '!' and the corresponding
+	  new ignore option given.
+	- subkeys are accepted if the key-id is appended with '+'.
+	- keys are requested from libgpgme before anything is downloaded
+	  (helps catching c&p errors and makes subkey checks possible).
+	- if verification fails, the status of all found signatures is printed.
+
+2009-04-07
+	* bugfix: ListHook was not used in rules including the rule with it
+	in "From:"
+	* add "ListShellHook", that is like ListHook but with arguments and
+	the files in stdin and stdout.
+
+2009-04-03
+	* fix bug (caught by assertion) that inverts the logic of downloading
+	.diff files when there is no DownLoadListsAs line.
+
+2009-03-18
+	* support new suffix ".new." for export hooks.
+	(Which moves filename + ".new" to filename on success,
+	but unlike ".new" does not mention the file in Release)
+	* new suffix ".keep" for export hooks tha just ignores that line,
+	for compatibility with future changes.
+	* warn if an (Deb|UDeb|Dsc)Indices line contains no filename.
+	(warn against everything starting with a dot to avoid a user putting
+	forgetting it and putting a compression identifier there).
+
+2009-03-14
+	* fix mishandling of libz return code
+	causing "Zlib error 1"..."stream end" error messages.
+	This defect seems to be only triggered with at least lenny's libz.
+	(And only when extracting Section and Priority from a dsc).
+
+2009-03-05
+	* Implement force.<compression> as DownLoadListAs item to download an
+	index not found in the Release file.
+	* warn if database is in old format
+
+2009-03-04
+	* also continue downloading index files after failure to get the
+	prefered one in the IgnoreRelease case.
+
+2009-03-03
+	* regression fix: when updating with IgnoreRelease, old index
+	files were no longer deleted in 3.8 before telling the apt-methods to
+	download new ones, which can trigger buggy behaviour in those.
+	* if one index file fails to be downloaded, try the next one
+	(except for updates with IgnoreRelease, yet)
+
+2009-03-02
+	* fix bug not taking all DownloadListAs into account when multiple
+	update rules requests the same index file to be downloaded.
+	* if a .diff/Index file does not list the available Packages file
+	or if not for targeted file, proceed with other ways to retrieve
+	it.
+	* add .diff processing as first default when there is no
+	DownloadListsAs.
+
+2009-03-01
+	* support using Packages.diff when updating.
+	(Fallback to other methods not yet supported, so not yet enabled
+	 in the default DownloadlistsAs)
+
+2009-02-28
+	* fix some bugs in --nothingiserror handling
+
+2009-02-27
+	* move handling of downloaded files from aptmethod.c to
+	the code queuing the files. (refactorisation in preparation of later
+	changes)
+
+2009-02-24
+	* fix race condition causing external uncompressors sometimes
+	to catch a sigpipe if their output is closed before they receive
+	the signal to kill them.
+	* changestool now supports looking into lzma files
+	(and bz2 files even when not compiled against libbz2), if
+	external uncompressors are available.
+	* fix bug extracting the Section and Priority from .diff
+	files if control was not the first file in it.
+	* fix bug .diff parsing's exception to also allow diff
+	generated files.
+
+2009-02-23
+	* log notifiers get variables REPREPRO_CAUSING_RULE and
+	REPREPRO_FROM set when adding packages via update/pull.
+	The later also in copy* and restore* commands.
+	* delete unexpected (i.e. not registered in the database)
+	files in pool when trying to replace with new ones.
+
+2009-02-21
+	* add --keeptemporaries and without it delete all .new files when
+	exporting fails (and not only Release) and with it keep all
+	(including Release). Also fix gpg error message to not suggest trying
+	it with a file that later will be deleted.
+
+2009-02-20
+	* add 'warning' flag for FilterList files
+
+2009-02-13
+	* add ReadOnly option for conf/distributions
+
+2009-02-08
+	* processincoming support includebyhand and includelogs tracking
+	  options
+	* new LogDir for processincoming, that gets the .changes files,
+	  .log files and unused byhand (or raw-*) files.
+
+2009-02-06
+	* ignore byhand and logfiles in 'include' unless tracking
+	  with includebyhand or includelogs is activated, then store them
+	  into the pool.
+
+2009-01-22
+	* fix typo causing copyfilter to fail
+	* add --gnupghome option to set GNUPGHOME environment variable
+	* fix importing of source packages from flat repositories without
+	a Directory field in Sources index.
+
+2009-01-17
+	* fix erroneous "strange filekey" warning for lib files in 3.8.0~alpha
+
+2009-01-16
+	* make Date: more like official Release files by replacing
+	the old "+0000" with "UTC".
+
+2009-01-15
+	* add support to generate Valid-Until in Release
+
+2009-01-09
+	* handle 'raw-*' sections like 'byhand' sections (i.e. mostly not
+	  handle them, but give better error messages).
+
+2009-01-06
+	* add DownloadListsAs: option for conf/updates to specify which index
+	  files (.gz, .bz2, .lzma, ...) to download when available.
+
+2009-01-04
+	* add support for libdb4.7 (yet with some warnings to note I have not
+	tested it much yet)
+	* bugfix in checkpool with old files.db
+
+2009-01-02
+	* FilterList/FilterFormula can be inherited with From: in update rules.
+	* bugfix: if FilterList return hold, FilterFormula was not asked.
+	  Not it is only hold if FilterFormula also includes this package.
+	  (pull/update)
+	* if a distribution is both flat and non-flat, do not raise an
+	  assert, but emmit a warning and proceed (new flatandnonflat ignore
+	  class to ignore that warning).
+
+2008-12-06
+	* add 'upgradeonly' value for FilterList, that only takes
+	  an package into account if it already exists.
+
+2008-12-02
+	* implement cleanlists command
+
+2008-11-24
+	* fix bug in sha256 calculation over very large files
+
+2008-11-13
+	* add dumpupdate and dumppull actions that are like checkupdate and
+	checkpull but with less information but that more easily parseable.
+
+2008-11-04
+	* fix parsing error of contents of very big .deb files.
+	Thanks to Aramian Wasielak and Alexander Perlis.
+
+2008-11-03
+	* rework handling of files added to the pool not used by anything.
+	(for example because the package was not added due to error).
+	New --keepunusednewfiles option to not delete such files.
+
+2008-11-01
+	* print number of newly unreferenced file on --keepunreferenced
+	and commands not deleting their references.
+
+2008-10-30
+	* add support for flat repositories with Sources files without
+	Directory lines (Thanks to Cody A.W. Somerville for noting).
+
+2008-10-12
+	* some rework on unreferenced files bookkeeping. Should make no
+	  difference yet but only make the "Deleting files not longer
+	  referenced" only show up if something is deleted...
+
+2008-10-05
+	* Internaly atomize components architectures and packagetypes.
+	  Causes multiple checks for unknown identifiers to be earlier or
+	  more strict. (And fields in conf/distributions have more
+	  restrictions w.r.t their order).
+	* fix bug in (tracking enabled) removesrc that caused malformed
+	  tracking data when a source package's track record contains a
+	  file no longer found in any distribution.
+	  [2009-01-16: I previously believed this nearly impossible to
+	  trigger, but a simply outdated tracking data already suffices
+	  to trigger it]
+
+2008-10-01
+	* warn if an update rule references local components or architectures
+	  that were not seen in conf/distributions (old behaviour was to check
+	  if any distribution that references this rule had this architecture,
+	  but that was too complex with the new rule-can-reference-rule
+	  possibilities).
+
+2008-09-18
+	* update rules can include other rules with From: allowing
+	  leaner conf/updates file and avoiding duplicate downloading
+	  of upstream indices.
+	* do not process distributions without Updates: field upon
+	  update/checkupdate/predelete...
+
+2008-09-09
+	* also support external uncompression programs for
+	  .orig.tar/.debian.tar/.tar uncompression, i.e.:
+	- support Section/Priority extraction from lzma compressed dsc packages
+	- libarchive no longer needs to be linked against zlib/libbz2
+	* fix some corner cases in .diff parsing
+
+2008-09-07
+	* add support for external uncompression programs
+	- speeding up updating, as downloading and uncompressing
+	  can happen at the same time
+	- support lzma compressed .deb and .diff (when unlzma is available)
+	- supporting .bz2 compressed files even when compiled without libbz2
+	  (but needing runtime bunzip2 then)
+	* make --nooldfilesdb the default
+
+2008-08-24
+	* unify reading of compressed files, adding support for:
+	- extracting section and priority from a .diff.bz2
+	- restoring from a snapshot with only .bz2 indices
+
+2008-08-23
+	* massive refactorisation of the update code to retrieve
+	  remote index files. Most important modifications:
+	- when the same remote distribution is needed by multiple
+	  updates, then the index files are only downloaded once.
+	  (still needs futher changes to allow better detection
+	   of the same source).
+	- ListHooks are called once per use (should mostly only
+	  make a difference for flat sources or with settings
+	  where this is needed).
+	- --nolistsdownload now only not downloads lists and has
+	  no other effects (checksums still checked, --noskipold
+	  no longer implied).
+	- deleting of old no longer needed lists (the default
+	  --nokeepunneeded) no longer exists.
+	- index files are stored uncompressed in lists/ and the
+	  way files are named there is less strange...
+	- many other changes are possible now and will hopefully
+	  be implemented soon.
+	* support downloading .bz2 indices
+	* add --via to Log-notifiers to only call notification
+	  scripts when the action was triggered by a specific
+	  command.
+
+2008-08-22
+	* some internal cleanup preparing for future changes...
+
+2008-08-16
+	* allow multiple export hooks
+
+2008-08-12
+	* check for Ctrl-C in file_foreach (dumpunreferenced, ...)
+
+2008-08-08
+	* fix handling of libbz2 return codes
+
+2008-08-07
+	* make reoverride work again...
+	  (and not ignore section and priority)
+
+2008-08-03
+	* remove iteratedupdate
+
+2008-07-30
+	* fix double-free whith --export=never
+
+2008-07-27
+	* buffered read of index files upon "update".
+
+2008-07-26
+	* add support to retrieve packages from flat repositories.
+
+2008-07-25
+	* refactor indexfile parsing. (Needed for future changes,
+	perhaps speeding some things up a tiny littly bit).
+	* fix logic error causing restorefilter aborting
+
+2008-07-23
+	* Do not claim --noskipold makes a difference in the update output
+	for targets not having any upstream to pull from.
+
+2008-07-22
+	* better cope with a file needed multiple times when
+	  updating
+
+2008-07-12
+	* make list package argument optional, listing all
+	packages if not there.
+	* fix bug causing assert() instead of proper error message
+	if list gets too many arguments.
+
+2008-07-03
+	* add IgnoreHashes directive for conf/updates
+
+2008-06-26  Bernhard R. Link <brlink@debian.org>
+	* add FakeComponentPrefix, that adds a prefix to components
+	in the Release file and removes them from Codename and Suite
+	in the central Release file. This way it looks more like
+	security /updates and thus apt is not confused.
+
+2008-06-25  Bernhard R. Link <brlink@debian.org>
+	* avoid creating symlinks that cannot work because of
+	a '/' in the link to create.
+
+2008-06-23  Bernhard R. Link <brlink@debian.org>
+	* fix bug in optionsfilename calculating introduced in
+	last revision.
+
+2008-06-22  Bernhard R. Link <brlink@debian.org>
+	* move some directoy variables to global variables,
+	some related cleanup in the code
+	* set REPREPRO_BASE_DIR, REPREPRO_OUT_DIR, REPREPRO_DIST_DIR,
+	REPREPRO_CONF_DIR and REPREPRO_LOG_DIR when calling log notifiers,
+	apt methods, update hooks or export hooks.
+
+2008-06-07  Bernhard R. Link <brlink@debian.org>
+	* remove some checks that fail for version 2 or 3 debian
+	source packages. (in reprepro include and changestool verify)
+	* extract missing Section and Priority also from a .debian.tar.{gz,bz2}
+	file.
+
+2008-06-06  Bernhard R. Link <brlink@debian.org>
+	* switch to 'new' AC_INIT and AM_INIT_AUTOMAKE syntax,
+	move automaitcally included autoconf to ac/ subdir
+	* fix typo causing internal error when removesrc
+	is called for a distribution with tracking for an unknown
+	source name.
+
+2008-05-17  Bernhard R. Link <brlink@debian.org>
+	* Add support for sha256.
+	* changestool puts Files: last, makes it easier
+	to use some versions of dupload.
+
+2008-05-16  Bernhard R. Link <brlink@debian.org>
+	* When include'ing a .changes file with Checksums
+	header and limiting to some files with -A or -T, do
+	not errounously complain about not expecting the
+	skipped files in Checksums-* headers
+	* Look at suite names when no distribution with the
+	requested codename exists.
+
+2008-05-15  Bernhard R. Link <brlink@debian.org>
+	* Print warning when not including when not including a
+	package because of unknown key/expire/revocation.
+	(In addition to the warning with -v about those problems
+	 with a signature and in addition to the message of not
+	 including a package at all if that was the only chance to
+	 get it in)
+
+2008-04-17  Bernhard R. Link <brlink@debian.org>
+	* fix free of uninitialized pointer when calling log notifiers
+	while removing (this time for real)
+
+2008-04-12  Bernhard R. Link <brlink@debian.org>
+	* move assertion to not abort() on wrong md5sums in include
+	command, but cleanly error out.
+	* do not close random fd when starting client without
+	control data.
+	* fix free of uninitialized pointer when calling log notifiers
+	while removing
+
+2008-04-05  Bernhard R. Link <brlink@debian.org>
+	* add restore restoresrc restorefilter and _addpackage
+
+2008-04-04  Bernhard R. Link <brlink@debian.org>
+	* add copysrc and copyfilter
+	* reimplement copy command (should no longer invalidate
+	  tracking information)
+	* warn against impossible -T values and impossible
+	  -A -T combinations (source is dsc and dsc is source)
+
+2008-03-31  Bernhard R. Link <brlink@debian.org>
+	* bugfix: no longer confuse -S and -P (introduced in 3.0.1)
+
+2008-03-25  Bernhard R. Link <brlink@debian.org>
+	* put a fake Suite: field in Release files generated by
+	gensnapshot to avoid apt warning about the distribution
+	name not matching.
+
+2008-03-17  Bernhard R. Link <brlink@debian.org>
+	* Log:-scripts are starting with environment-variable
+	REPREPRO_CAUSING_FILE set to the main file causing this
+	change. (.changes for include/processincoming, .dsc for includedsc,
+	.deb for includedeb);
+
+2008-03-14  Bernhard R. Link <brlink@debian.org>
+	* read Checksums-Sha1 in .changes file in processincoming
+
+2008-03-13  Bernhard R. Link <brlink@debian.org>
+	* changestool can write Checksums-Sha1 headers now
+	* read Checksums-Sha1 in .changes file in the include command
+
+2008-03-12  Bernhard R. Link <brlink@debian.org>
+	* Bugfix: When replacing fields only those matching with
+	the same case were replaced.
+
+2008-03-10  Bernhard R. Link <brlink@debian.org>
+	* write Checksums-Sha1 to Sources.gz when available and
+	remove Checksums-Sha256 to avoid problems with not yet being
+	able to add the .dsc file.
+	* Do not warn about missing Standards-Version as newer dpkg-source
+	no longer include them.
+
+2008-03-09  Bernhard R. Link <brlink@debian.org>
+	* read Checksums-Sha1 in .dsc files
+
+2008-03-08  Bernhard R. Link <brlink@debian.org>
+	* When missing section or priority reprepro's includedsc and
+	changestool's add[dsc] look into the .diff and the .tar file.
+	* changestool's add* commands look for files in the current directory
+	first, adddsc for files referenced in the directory of the dsc file.
+
+2008-03-06  Bernhard R. Link <brlink@debian.org>
+	* fix/improve some messages, based upon many suggestions
+	by Marc Haber.
+
+2008-03-02  Bernhard R. Link <brlink@debian.org>
+	* fix double free error in checksums upgrade case of includedeb
+
+2008-03-01  Bernhard R. Link <brlink@debian.org>
+	* cleaning: port changestool to new checksums code,
+	  finally removing the old md5sum code.
+
+2008-02-29  Bernhard R. Link <brlink@debian.org>
+	* improve documentation of listfilter command
+
+2008-02-21  Bernhard R. Link <brlink@debian.org>
+	* make --without-libarchive compile again, thanks to
+	Jesus Roncero for noticing.
+
+2008-02-19  Bernhard R. Link <brlink@debian.org>
+	* Try harder not to leave any newly added files
+	to the pool in the case of an error.
+
+2008-02-15  Bernhard R. Link <brlink@debian.org>
+	* Also ignore missing Changes and Description lines
+	in .changes files with "include".
+
+2008-02-12  Bernhard R. Link <brlink@debian.org>
+	* Add --outdir directive to set the directory the pool
+	hierarchy is put under (and the dists hierarchy unless
+	--distdir puts it somewhere else).
+
+2008-02-11  Bernhard R. Link <brlink@debian.org>
+	* fix --waitforlock parsing on 64 bit size_t architectures.
+	  (Thanks to Arno Renevier for reporting the bug)
+
+2008-02-01  Bernhard R. Link <brlink@debian.org>
+	* new --nooldfilesdb switch to only use new-style checksum database
+	* improve db/version generation, set minimum required reprepro version
+	to 3.3.0 when only using checksums.db
+
+2008-01-13  Bernhard R. Link <brlink@debian.org>
+	* improve collecting of not yet known checksums and using
+	already recorded checksums in the database
+
+2008-01-06  Bernhard R. Link <brlink@debian.org>
+	* implement collectnewchecksums
+
+2008-01-04  Bernhard R. Link <brlink@debian.org>
+	* add checksums.db to store all checksums (as opposed to only md5sums
+	in files.db). The old files.db persists for compatibility, but when
+	checksums.db is up to date (when repository is generated with new
+	reprepro or to be implemented collectnewchecksums was run) the old
+	files.db can be deleted and only checksums.db is used then. (Of
+	course you should not run an older reprepro with that repository
+	then, ever).
+
+2008-01-03  Bernhard R. Link <brlink@debian.org>
+	* tracking.c uses database.c instead of libdb directly
+
+2007-12-14 - 2007-12-23  Bernhard R. Link <brlink@debian.org>
+	* collect and advertise  more checksums, though not yet stored
+
+2007-12-10  Bernhard R. Link <brlink@debian.org>
+	* support lzma compressed source packages
+
+2007-12-01  Bernhard R. Link <brlink@debian.org>
+	* beautify control data read from .deb or .dsc/.changes files:
+	  remove all CR and make sure leading or trailing newlines do
+	  not hurt.
+
+2007-11-27  Bernhard R. Link <brlink@debian.org>
+	* rewrite support for reading text files containing a single
+	chunk. (Release, .dsc, .changes). Unsigned .dsc and .changes
+	files are no longer routed through libgpgme.
+
+2007-11-24  Bernhard R. Link <brlink@debian.org>
+	* references.c uses database.c instead of accessing libdb directly
+
+2007-11-19  Bernhard R. Link <brlink@debian.org>
+	* mark more filedescriptors closeonexec,
+	  support closefrom and F_CLOSEM when available.
+
+2007-11-18  Bernhard R. Link <brlink@debian.org>
+	* add sha1 hash calculation code
+	* add sha1 hashes of index files into Release files.
+	  release.cache.db renmamed to release.caches.db due
+	  to modified syntax.
+
+2007-10-31  Bernhard R. Link <brlink@debian.org>
+	* translatefilelists now can be run when both old
+	and new style filelists are there (this can happen
+	when it was translated and an old version of reprepro
+	was run over this database. You should not do this,
+	but when it happens, translatefilelists can be used
+	now instead of having to reextract the lists).
+
+2007-10-29  Bernhard R. Link <brlink@debian.org>
+	* If exporting a distribution fails, warn if something is left
+	in a state that needs manual exporting.
+
+2007-10-26  Bernhard R. Link <brlink@debian.org>
+	* change --export default from "normal" (now also available
+	under the name "lookedat") to "changed".
+
+2007-10-21  Bernhard R. Link <brlink@debian.org>
+	* warn against -A,-C,-T,-S or -P given to an action not
+	using it, with new --ignore=unusedoption to ignore this.
+
+2007-10-07  Bernhard R. Link <brlink@debian.org>
+	* change db/version file to final format,
+	  abort if version or libdb version specified
+	  there cannot be fulfilled.
+
+2007-09-27  Bernhard R. Link <brlink@debian.org>
+	* allow comments starting within lines in config files
+	* also allow tab as first character for continued lines as
+	manpage already says.
+
+2007-09-23  Bernhard R. Link <brlink@debian.org>
+	* save another 2 seconds while sorting filelists for Contents files
+
+2007-09-22  Bernhard R. Link <brlink@debian.org>
+	* make empty Architectures and Components fields
+	  in conf/distributions an error.
+	* Contents: fields no longer has a rate value,
+	  ContentsComponents/Architectures/UComponents
+	  triggers or disables contents generation if non-/empty.
+	* empty Architecturs/Components/UdebComponents in
+  	  conf/updates and conf/pulls now mean nothing instead of all.
+	* minimal additional speedup when sorting filelists
+
+2007-09-21  Bernhard R. Link <brlink@debian.org>
+	* save cached filelists of packages for Contents files
+	in a preprocessed form, needing only about half the disk
+	space and only half the time when generating the Contents file.
+	* new translatefilelists command to translate old to new format
+	* filelists reading no longer available without libarchive
+
+2007-09-19  Bernhard R. Link <brlink@debian.org>
+	* files.c uses database.c instead of accessing libdb directly
+	* release.c uses database.c instead of accessing libdb directly
+
+2007-09-16  Bernhard R. Link <brlink@debian.org>
+	* add removesrc and removefilter action
+
+2007-09-15  Bernhard R. Link <brlink@debian.org>
+	* move package database handling from packages.c to database.c
+
+2007-09-14  Bernhard R. Link <brlink@debian.org>
+	* rereference now also refreshes references by tracking data.
+
+2007-09-13  Bernhard R. Link <brlink@debian.org>
+	* retrack no longer create track records for distributions with
+	tracking disabled, dumptracks no longer generated empty databases.
+	* removealltracks now also works on distributions no longer listed
+	in conf/distributions, no longer supports being used on all
+	distributions listed there (i.e. without argumnts)
+	* tidytracks not remove all tracking data from a distribution without
+	tracking activated.
+	* clearvanished removes tracking data from vanished distributions.
+	* in default --nofast mode, check for unexpected tracking data and
+	do not run, unless --ignore=undefinedtracking is defined
+	* retrack refreshes tracking information instead of destroying and
+	starting new.
+	* make update's ListHook relative to confdir
+	* low level part of the includelogs options added
+
+2007-09-11  Bernhard R. Link <brlink@debian.org>
+	* reject spaces and tabs in key-names (i.e. before :) in config files,
+	instead of bubbling about unknown fields.
+
+2007-09-10  Bernhard R. Link <brlink@debian.org>
+	* improve parsing of update's Config lines
+
+2007-09-09  Bernhard R. Link <brlink@debian.org>
+	* never hardlink index files, but copy them always into the lists
+	  directory. (Should not make a difference yet, but feels safer).
+	* warn if update rules list components or architectures are always ignored
+
+2007-09-08  Bernhard R. Link <brlink@debian.org>
+	* warn if pull rules list components or architectures are always ignored
+
+2007-09-07  Bernhard R. Link <brlink@debian.org>
+	* create db/version
+	* always create all packages.db subtables, so future
+	  versions can detect new architectures/components.
+
+2007-09-06  Bernhard R. Link <brlink@debian.org>
+	* read all distribution definitions before starting
+	  any action.
+
+2007-09-04  Bernhard R. Link <brlink@debian.org>
+	* test number of arguments earlier.
+
+2007-09-03  Bernhard R. Link <brlink@debian.org>
+	* remove the dbdirs and all its parents created at startup
+	that are still empty at shutdown. (Does not make much difference
+	yet, as most commands create an empty file database in there.)
+	* obsolete --overridedir, overrides belong to conf dir like all
+	the other config files now.
+
+2007-09-02  Bernhard R. Link <brlink@debian.org>
+	* fix uninitialized use of errno in listclean.
+	  (might cause update to report error opening dir: file exists)
+	* new config file parser
+	* remove --ignore from changestool, --ignore=shortkeyid from reprepro
+	* move to C99's bool, false and true
+
+2007-08-21  Bernhard R. Link <brlink@debian.org>
+	* ignore SIGPIPE, so that libgpgme cannot tear us apart
+	so easily.
+
+2007-08-20  Bernhard R. Link <brlink@debian.org>
+	* Print ignored signatures in Release.gpg files
+	when verbosity > 10
+
+2007-08-18  Bernhard R. Link <brlink@debian.org>
+	* stop dumpreferences output when Ctrl-c is received.
+
+2007-08-03  Bernhard R. Link <brlink@debian.org>
+	* add --without-libgpgme to compile without
+	gpgme support (checking and signing are then not
+	available, yet).
+
+2007-08-19  Bernhard R. Link <brlink@debian.org>
+	* [SECURITY] fix bug causing a Release.gpg with only
+	unknown signatures considered as properly signed.
+
+2007-07-28  Bernhard R. Link <brlink@debian.org>
+	* fix segfault in changestool's verify if
+	md5sum of .orig.tar.gz is wrong and not listed
+	in the .changes file.
+	* changestool's verify knows about epochs not showing
+	up in filenames now.
+
+2007-07-26  Bernhard R. Link <brlink@debian.org>
+	* add support for .changes file having the source
+	version in the Sources: header (like binNMUs) to the
+	include and processincoming commands.
+
+2007-07-22  Bernhard R. Link <brlink@debian.org>
+	* include[u]deb allows multiple files to include now
+
+2007-06-25  Bernhard R. Link <brlink@debian.org>
+	* don't complain if suite name and component name are
+	the same in createsymlinks
+
+2007-06-24  Bernhard R. Link <brlink@debian.org>
+	* processincoming allows an optional second argument
+	to limit processing to a specific file for better
+	integration with inoticoming.
+
+2007-06-16  Bernhard R. Link <brlink@debian.org>
+	* when checking a file to have the expected checksum,
+	first check if the file size matches before calculating
+	its md5sum.
+
+2007-06-11  Bernhard R. Link <brlink@debian.org>
+	* detect "false" and "no" as false in boolean headers.
+	(Until now only existence was tested and considered as
+	 true, which broke apt-methods telling "Send-Config: false")
+
+2007-06-10  Bernhard R. Link <brlink@debian.org>
+	* don't waste filedescriptors by not closing .done-files
+
+2007-06-09  Bernhard R. Link <brlink@debian.org>
+	* set GPG_TTY when unset and stdin is a terminal.
+	  (and new option --noguessgpgtty to suppress this)
+
+2007-06-03  Bernhard R. Link <brlink@debian.org>
+	* fix segfault when running processincoming without notificators
+	(Thanks to Julien Valroff for finding this)
+
+2007-06-02  Bernhard R. Link <brlink@debian.org>
+	* rename --checkspace to --spacecheck, as
+	manpage and error messages hint to that.
+	* fix 64bit problem in errormessages  for Log:
+
+2007-05-29  Bernhard R. Link <brlink@debian.org>
+	* adapt name include uses for .changes files to
+	  that of processincoming.
+
+2007-05-25  Bernhard R. Link <brlink@debian.org>
+	* some fixed and improvements of the free space calculation
+	( add --spacecheck, --safetymargin, --dbsafetymargin )
+
+2007-05-24  Bernhard R. Link <brlink@debian.org>
+	* error/warn if trying to include a package via
+	  processincoming which is already there newer
+	* do not notify a .changes when no package included
+          (when using Log: --changes)
+	* add Permit: unused_files older_version
+	  and Cleanup: unused_files on_deny on_error for conf/incoming
+	* add --waitforlock option
+
+2007-05-23  Bernhard R. Link <brlink@debian.org>
+	* fix remove action not tidy tracked packages.
+	  (Thanks to Dan Pascu for finding this, too)
+	* rename cleartracks in removealltracks
+	* new tidytracks command
+
+2007-05-22  Bernhard R. Link <brlink@debian.org>
+	* Add per distribution notification scripts for accepted changes files.
+
+2007-05-21  Bernhard R. Link <brlink@debian.org>
+	* fix problem of not waiting for notificators in some commands
+	  (Thanks to Dan Pascu for finding this)
+
+2007-05-07  Bernhard R. Link <brlink@debian.org>
+	* move some code from release.c to signature.c in preperation of
+	  later changes
+
+2007-05-06  Bernhard R. Link <brlink@debian.org>
+	* changestool: add adddsc command
+	* changestool: add --create option
+	* changestool: add add command
+	* changestool: add setdistribution command
+
+2007-05-03  Bernhard R. Link <brlink@debian.org>
+	* changestool: add addrawfile command
+
+2007-04-03  Bernhard R. Link <brlink@debian.org>
+	* first code for checking for enough free space
+
+2007-03-29  Bernhard R. Link <brlink@debian.org>
+	* add rerunnotifiers command
+
+2007-03-28  Bernhard R. Link <brlink@debian.org>
+	* add support logging to external notificators
+	  (including example to create changelog/ hierachy)
+
+2007-03-26  Bernhard R. Link <brlink@debian.org>
+	* fix bug in term parsing not accepting '<<'
+
+2007-03-23  Bernhard R. Link <brlink@debian.org>
+	* first part of logging code
+
+2007-03-16  Bernhard R. Link <brlink@debian.org>
+	* fix bug not recognizing already existing .bz2 files
+	  when exporting only changes.
+	* more changes in verbose output
+
+2007-03-15  Bernhard R. Link <brlink@debian.org>
+	* more output to stdout instead of stderr
+
+2007-03-14  Bernhard R. Link <brlink@debian.org>
+	* processincoming only exports distributions looked at
+	  with --export=always (the default) and not every distribution.
+	  (other commands should not have changed)
+	* changed output of many status messages to stdout instead of stderr
+	* changed verbosity level needed to see some messages
+
+2007-03-12  Bernhard R. Link <brlink@debian.org>
+	* add --silent option
+	* change some status output to stdout instead of stderr.
+
+2007-02-26  Bernhard R. Link <brlink@debian.org>
+	* add gensnapshot command
+
+2007-02-23  Bernhard R. Link <brlink@debian.org>
+	* rename import to processincoming
+	* describe in manpage
+	* update bash completion example
+
+2007-02-11  Bernhard R. Link <brlink@debian.org>
+	* fix bug in non-libarchive filelist extraction with long
+	filelists
+
+2007-01-25  Bernhard R. Link <brlink@debian.org>
+	* import allow .changes files with multiple distributions
+
+2007-01-21  Bernhard R. Link <brlink@debian.org>
+	* add trackingsupport to "import" command
+
+2007-01-17  Bernhard R. Link <brlink@debian.org>
+	* fail cleanly when getting a .dsc without Format header
+
+2007-01-16  Bernhard R. Link <brlink@debian.org>
+	* improve error message of missing Files: line in .dsc files
+
+2007-01-12  Bernhard R. Link <brlink@debian.org>
+	* add AlsoAcceptFor for distributions
+
+2007-01-06  Bernhard R. Link <brlink@debian.org>
+	* incoming fixups and more testcases
+	* omit some warnings about versions not starting
+	  with a digit
+
+2007-01-05  Bernhard R. Link <brlink@debian.org>
+	* better cope with double entries in some
+	  lists. (Like Architectures or Components)
+	* incoming fixups and more testcases
+
+2007-01-04  Bernhard R. Link <brlink@debian.org>
+	* more fixups of incoming handling
+
+2007-01-03  Bernhard R. Link <brlink@debian.org>
+	* factor some checkindeb code into binaries.c
+	* incoming.c uses now only binaries.c and not checkindeb.c
+	  in preperation of different semantics to come.
+
+2007-01-02  Bernhard R. Link <brlink@debian.org>
+	* factor some checkindsc code into source.c
+	* add dsc support for import from incoming
+
+2007-01-01  Bernhard R. Link <brlink@debian.org>
+	* move uploaderslist load into distribution struct
+	* fix bug in manpage: uploaders list keyword is allow and not accept
+	* some more code for incoming processing
+
+2006-12-31  Bernhard R. Link <brlink@debian.org>
+	* first code for importing from an incoming dir, not
+	yet useable (supports no source, no overrides, no ... yet)
+	* move loaded overrides into distribution struct.
+
+2006-12-17  Bernhard R. Link <brlink@debian.org>
+	* tell about the filename in the non-libarchive
+	  case of failure to extract control or filelist
+	  from a .deb
+	* add _fakeemptyfilelist action to omit a file
+	when generting Content files.
+
+2006-11-28  Bernhard R. Link <brlink@debian.org>
+	* mostly rewrote "adddeb"
+
+2006-11-27  Bernhard R. Link <brlink@debian.org>
+	* add "adddeb" option to changestool
+
+2006-10-31  Bernhard R. Link <brlink@debian.org>
+	* fix spelling mistakes in manpage (thanks to A. Costa)
+	  fixed the same errors in the code and its messages
+
+2006-10-29  Bernhard R. Link <brlink@debian.org>
+	* fix updatechecksums for .changes files not
+	listing entries from the .dsc
+
+2006-10-11  Bernhard R. Link <brlink@debian.org>
+	* add Uploaders: rule to conf/distributions to
+	limit include to .changes files signed with specific keys.
+
+2006-10-07  Bernhard R. Link <brlink@debian.org>
+	* only show control information of to be added packages
+	  in checkpull/checkupdate with -V
+	* fixed a missed refcount increasing in yesterdays code
+	* give hints where to look when gpgme reports no error on
+	  failure
+
+2006-10-06  Bernhard R. Link <brlink@debian.org>
+	* FilterList in update and pull rules now
+	  is a space separated list of files.
+
+2006-10-03  Bernhard R. Link <brlink@debian.org>
+	* fix typos and spelling errors in manpage (Thanks to Bruce Sass)
+	* fix type-mismatch to silence compiler-warning
+	* work around signing problems in gpgme11, fix some memory holes
+
+2006-10-01  Bernhard R. Link <brlink@debian.org>
+	* new includeallsources command for changestool
+	  to change a .changes as if it was created with -sa
+
+2006-09-30  Bernhard R. Link <brlink@debian.org>
+	* new updatechecksums command for changestool
+
+2006-09-24  Bernhard R. Link <brlink@debian.org>
+	* ported to libgpgme11
+	* removed --onlyacceptsigned
+
+2006-09-20  Bernhard R. Link <brlink@debian.org>
+	* make strlist_init void
+
+2006-09-19  Bernhard R. Link <brlink@debian.org>
+	* rename modifychanges to changestool
+
+2006-09-17  Bernhard R. Link <brlink@debian.org>
+	* fix return of fingerprints in new signature handling code
+	* move endswith from main.c to names.h
+	* add modifychanges helper program (yet only validating some stuff)
+
+2006-09-12  Bernhard R. Link <brlink@debian.org>
+	* reject .changes with binaries not listed, unless --ignore=surprisingbinary
+	* reject .changes with .dsc or .deb with wrong source version
+	  unless --ignore=wrongversion or --ignore=wrongsourceversion
+	* earlier and better error message if source name differs from the one
+	  given in the .changes file.
+	
+2006-09-11  Bernhard R. Link <brlink@debian.org>
+	* new strlist_add_dup
+	* more fine tuned signature checking (one valid signature suffices)
+	* fix a little memory hole in tracking code
+
+2006-09-07  Bernhard R. Link <brlink@debian.org>
+	* fix some typos (thanks to Jordi Mallach for noting)
+
+2006-09-04  Bernhard R. Link <brlink@debian.org>
+	* support .orig.tar.bz2 .tar.bz2 and .diff.bz2 in source packages
+	* fix bug, causing  Contents-* files containing only the first file
+	  of a package when this is the first time this package is accessed
+
+2006-08-22  Bernhard R. Link <brlink@debian.org>
+	* fix db3 mention in reprepro.1
+
+2006-08-05  Bernhard R. Link <brlink@debian.org>
+	* some error/status/debug messages improved a little
+
+2006-08-03  Bernhard R. Link <brlink@debian.org>
+	* improve messages when missing files (.tar.gz most likely)
+
+2006-07-28  Bernhard R. Link <brlink@debian.org>
+	* remove unreferenced files when doing removetracks
+	* fix bug omitting an uncompressed Sources entry in
+	  Release files when only exporting changed values and
+	  the source part changed not. (Thanks to Alexander Kuehn
+	  for finding this one).
+	* fix tiny memory in clearvanished
+
+2006-07-26  Bernhard R. Link <brlink@debian.org>
+	* do not error out if one file gets unreferenced by two different
+	reasons at the same time.
+	* implement "minimal" and "all" tracking support for packages losing
+	files because of getting replaced by newer ones...
+
+2006-07-23  Bernhard R. Link <brlink@debian.org>
+	* rewrite some parts of tracking support, implement
+	  "minimal" and "all" methods...
+
+2006-07-18  Bernhard R. Link <brlink@debian.org>
+	* fix segfault in non-libarchive control extraction code
+	  introduced with the last change
+
+2006-07-16  Bernhard R. Link <brlink@debian.org>
+	* cope with control.tar.gz files without leading ./
+	  when not using libarchive.
+
+2006-07-15  Bernhard R. Link <brlink@debian.org>
+	* cope with GNU style ar files when using libarchive
+	  (i.e. with .deb files not generated by dpkg-deb)
+
+2006-07-08  Bernhard R. Link <brlink@debian.org>
+	* add clearvanished command
+
+2006-06-21  Bernhard R. Link <brlink@debian.org>
+	* add copy command to pull only a specific package
+	without having to add FilterFormulas to conf/pulls
+	(and also a bit faster)
+
+2006-06-19  Bernhard R. Link <brlink@debian.org>
+	* add predelete action to remove packages from
+	a distribution that would be deleted or replaced
+	by a command.
+
+2006-06-18  Bernhard R. Link <brlink@debian.org>
+	* check for file conflicts and missing files when including
+	.changes files before copying/moving files into the pool
+	(Files missing in .dsc and files having the wrong md5sum
+	 are still only noticed after/while moving them in the pool)
+	* delete files from the pool when checks after including
+	the files but before including the packages failed.
+
+2006-06-16  Bernhard R. Link <brlink@debian.org>
+	* manpage mentions includeudeb now. (Thanks to Jordi Mallach for noting)
+	* changed manpage to make clear options are before the command (dito)
+	* catch TERM, ABRT, INT and QUIT and do not start any new stuff after
+	  that.
+	* remove force option (rarely worked and caused ugly bugs otherwise)
+
+2006-06-12  Bernhard R. Link <brlink@debian.org>
+	* some prework for predelete action
+
+2006-06-01  Bernhard R. Link <brlink@debian.org>
+	* better usage description in tiffany.example
+	* fix the fix for the export preprocessor
+
+2006-05-30  Bernhard R. Link <brlink@debian.org>
+	* fix bug in communication with Index file preprocessor
+	(so the .diff directories tiffany.example creates are
+	 properly advertised so that apt-get can use them)
+
+2006-05-15  Bernhard R. Link <brlink@debian.org>
+	* warn against dobuled fields in
+	config files. (ignorable with --ignore=doublefield)
+	* better error message when trying to forget
+	filekey not existing
+
+2006-05-14  Bernhard R. Link <brlink@debian.org>
+	* add support for libdb4.3 and libdb4.4,
+	default is libdb4.4 now.
+
+2006-05-13  Bernhard R. Link <brlink@debian.org>
+	* add support for contents file when compiled
+	without libarchive.
+
+2006-05-12  Bernhard R. Link <brlink@debian.org>
+	* add content file generation
+
+2006-05-07  Bernhard R. Link <brlink@debian.org>
+	* add support for extracting filelists from
+	Debian packages for future usage and a
+	__extractfilelist action. (only available when
+	compiled with libarchive)
+
+2006-05-06  Bernhard R. Link <brlink@debian.org>
+	* add support for using libarchive to get the
+	control file out of a .deb instead of calling
+	ar and tar.
+
+2006-05-03  Bernhard R. Link <brlink@debian.org>
+	* add new pull and checkpull actions
+	* repair checkupdate statistics of newest available
+	  version of checkupdate when using delete rules.
+	  (Showed 'unavailable for reload').
+	* fix segfault and memory leak in checkupdate
+	* fix including a changes file with source and restricting
+	  to some binary distribution or to binary package type.
+	* add some warnings against impossible combinations of -T and -A
+
+2006-04-29  Bernhard R. Link <brlink@debian.org>
+	* fix some minor memory leaks
+
+2006-04-28  Bernhard R. Link <brlink@debian.org>
+	* rewrite decision for exporting distributions a bit:
+	export all distributions that did not have errors by default
+	(it did not export anything when an error occurred)
+	added new --export option with possible values
+	   never, changed, normal and forced.
+
+2006-04-25  Bernhard R. Link <brlink@debian.org>
+	* do not export indices if all upgrades were skipped
+
+2006-04-23  Bernhard R. Link <brlink@debian.org>
+	* unbreak new skipold for delete rules
+
+2006-04-22  Bernhard R. Link <brlink@debian.org>
+	* explicitly save which files are already
+	processed and to be skipped by --skipold.
+
+2006-04-11  Bernhard R. Link <brlink@debian.org>
+	* tell the user running gpg manually sometimes
+	resolves problems while calling it through libgpgme
+	does not help.
+	* add a WORKAROUND part to the manpage
+
+2006-04-09  Bernhard R. Link <brlink@debian.org>
+	* remove the woody reference in signature.c
+
+2006-03-30  Bernhard R. Link <brlink@debian.org>
+	* warn about architectures called 'all'
+
+2006-02-25  Bernhard R. Link <brlink@debian.org>
+	* add --ignore=missingfile to look for .orig.tar.gz
+	files of broken .changes (no -sa though needed) files
+	in the directory of the .changes file.
+
+2006-02-20  Bernhard R. Link <brlink@debian.org>
+	* add optional "NotAutomatic" field for the
+	distribution specification.
+
+2006-02-10  Bernhard R. Link <brlink@debian.org>
+	* add new --ignore=extension, without which
+	it refuses to 'include' files not ending in '.changes',
+	to 'include[u]deb' files not ending in '.[u]deb' or to
+	'includedsc' files not ending '.dsc'.
+
+2006-01-21  Bernhard R. Link <brlink@debian.org>
+	* fix typesetting error in ratpoison.1
+	  and add an example for update's Config option.
+	* fix segfault of FD_ISSET(-1,&...) when
+	  method is not used (i.e. --nolistsdownload
+	  and only need to get from other sources)
+	* fix minor memory leak of --skipold
+
+2005-12-24  Bernhard R. Link <brlink@debian.org>
+	* add cache database to store md5sums
+	of released files in there.
+
+2005-12-23  Bernhard R. Link <brlink@debian.org>
+	* Implement native .bz2 compression
+	(only when libbz2.so was available at build time)
+
+2005-12-22  Bernhard R. Link <brlink@debian.org>
+	* fix some spelling errors
+	(thanks to Guilherme de S. Pastore for notifying me)
+
+	* make index exportion code more low level, allowing
+	in-place md5sum calculation without needing to reread
+	the generated files.
+
+	* fix problem of bzip2.example script
+
+2005-12-20  Bernhard R. Link <brlink@debian.org>
+	* refactor index exporting/release generation
+	so that is always puts the uncompressed checksums
+	in the Release file.
+	* reverting the changes from 2005-12-15
+          (i.e. again not writing uncompressed Sources
+	   by default, as the checksum now shows up
+	   in the Release file anyway, as apt needs it)
+	* {Dsc,Deb,UDeb}Indices' external programs
+	are now only called with the uncompressed files.
+
+2005-12-19  Bernhard R. Link <brlink@debian.org>
+	* fix segfault introduced into interatedupdate
+	by --skipold.
+
+2005-12-18  Bernhard R. Link <brlink@debian.org>
+	* split Release reading from release.c to readrelease.c
+
+2005-12-15  Bernhard R. Link <brlink@debian.org>
+	* Generate uncompressed source/Sources by default.
+
+2005-12-11  Bernhard R. Link <brlink@debian.org>
+	* Unless the new --noskipold is used,
+	only targets with newly downloaded index
+	files are updated.
+
+2005-12-10  Bernhard R. Link <brlink@debian.org>
+	* remove pool-directories gotten empty
+	(thanks to Julien Valroff for suggesting this)
+	* new --keepdirectories option to not try this
+
+2005-10-27  Bernhard R. Link <brlink@debian.org>
+	* add colons in description within bzip.example
+	(thanks to Steve Kemp for finding this)
+
+2005-10-05  Bernhard R. Link <brlink@debian.org>
+	* add --ignore=missingfield,brokenold,brokenversioncmp,
+	unusedarch,surpisingarch
+
+2005-10-03  Bernhard R. Link <brlink@debian.org>
+	* replace readdir_r by readdir to be sure errno is
+	set properly.
+
+2005-10-02  Bernhard R. Link <brlink@debian.org>
+	* some cleanups (strict truthvalue-typing
+	  and some integer signednesses...)
+
+2005-09-28  Bernhard R. Link <brlink@debian.org>
+	* Fix segfault when update file is empty.
+	  (Thanks to Gianluigi Tiesi for noticing this.)
+
+2005-09-26  Bernhard R. Link <brlink@debian.org>
+	* Document override files' format in manpage
+	* Fix integer size in tracking data handling
+
+2005-09-25  Bernhard R. Link <brlink@debian.org>
+	* Documenting --ignore in manpage
+	* some clarifications in manpage
+
+2005-09-24  Bernhard R. Link <brlink@debian.org>
+	* putting a .changes in the wrong distribution
+	is an error now without --ignore=wrongdistribution
+	* puttin new address in GPL notices, redownload
+	  COPYING (fixing some typos and addresses)
+
+2005-09-22  Bernhard R. Link <brlink@debian.org>
+	* add --unignore (with alias --noignore)
+	to allow overwriting ignore in config.
+
+2005-09-06  Bernhard R. Link <brlink@debian.org>
+	* fix error in parsing FilterList default action
+	  (thanks to Sergio Talens-Oliag for finding that)
+
+2005-08-28  Bernhard R. Link <brlink@debian.org>
+	* add REPREPRO_CONFIG_DIR
+
+2005-08-26  Bernhard R. Link <brlink@debian.org>
+	* read conf/options for default command line options,
+	use REPREPRO_BASE_DIR for default -b value, add --no
+	options to disable previously enabled options again.
+	* add a createsymlinks command to create suite->codename
+	symlinks
+
+2005-08-05  Bernhard R. Link <brlink@debian.org>
+	* do not set execute bit of signed files
+
+2005-08-02  Bernhard R. Link <brlink@debian.org>
+	* allow ~ in versions listed within .changes
+	* changed spacing in dpkgversions.c to make
+	  comparing to originals in dpkg easier.
+
+2005-07-20  Bernhard R. Link <brlink@debian.org>
+	* read SignWith:-argument and give it to
+	libgpgme to decide which key to use.
+
+2005-07-05  Bernhard R. Link <brlink@debian.org>
+	* Document tracking
+
+2005-07-03  Bernhard R. Link <brlink@debian.org>
+	* add quick&dirty --ask-passphrase option
+
+2005-06-18  Bernhard R. Link <brlink@debian.org>
+	* add tracking.c and some starting functionality
+	* therefor refactored .deb and .dsc inclusion
+	  so that .changes includsion can check those
+	  better before doing anything.
+	* some little tidy ups (freeing more memory,
+	  fixing bad english
+
+2005-06-02  Bernhard R. Link <brlink@debian.org>
+	* Change default basedir to "."
+
+2005-05-31  Bernhard R. Link <brlink@debian.org>
+	* Fix bogus free causing segfaults
+	* No longer silently ignore additional arguments with include*
+	
+2005-05-13  Bernhard R. Link <brlink@debian.org>
+	* add Fallback option to update-methods.
+
+2005-04-16  Bernhard R. Link <brlink@debian.org>
+	* fix broken fix in signature.c from 2005-04-10
+	* fix bug when after a delete rule the second
+	  origin has the version already in an archive
+
+2005-04-12  Bernhard R. Link <brlink@debian.org>
+	* fix same more warnings
+
+2005-04-10  Bernhard R. Link <brlink@debian.org>
+	* apply some clean ups:
+	  - distinguish between boolean and non-boolean values
+	  - split globals from error.h in globals.h
+	* fix bug in signature.c to not treat config error like valid key.
+
+2005-04-07  Bernhard R. Link <brlink@debian.org>	
+	* fix wrong handling of bugs in update specifications
+	* adopt short-howto to present
+	* fix typo in manpage
+
+2005-04-05  Bernhard R. Link <brlink@debian.org>	
+	* create files without executeable bit set
+	when copying files.
+
+2005-03-29  Bernhard R. Link <brlink@debian.org>
+	* iteratedupdate directly exports indices instead
+	of all at the end...
+
+2005-03-28  Bernhard R. Link <brlink@debian.org>
+	* Implement "interatedupdate" command, which iterates the
+	distributions and targets within them, instead of first
+	downloading all lists, then processing all lists, then
+	downloading all packages and then installing them all.
+	(This can be a bit slower, but needs less memory)
+
+	* Two --force are needed to ignore wrong Release.gpg
+
+2005-03-27  Bernhard R. Link <brlink@debian.org>
+	* Implement ".tobedeleted" feature for
+	export skripts.
+
+2005-03-22  Bernhard R. Link <brlink@debian.org>
+	* Repeat that there were errors at the
+	end of reprepro.
+
+2005-03-11  Bernhard R. Link <brlink@debian.org>
+	* Do not accept multiple -A,-C,-T,-S or -Ps.
+
+2005-03-02  Bernhard R. Link <brlink@debian.org>
+	* Change Override/SrcOverride to
+	DebOverride/UDebOverride/DscOverride
+
+	* add new command reoverride to reapply
+	overrides to all packages.
+	
+2005-02-20  Bernhard R. Link <brlink@debian.org>
+	* add docs/tiffany.example, which generates
+	apt-qupdate'able .diff directories.
+
+	* Many small changes to make splint more
+	happy. (Mostly annotations, some clearance
+	and some fixes of memory holes or possible
+	segfaults if running out of memory)
+
+2005-02-19  Bernhard R. Link <brlink@debian.org>
+	* Refactor Index Exporting and Release generation
+	to reduce the time Release files and Package indices
+	are out of sync (Everything is written to files
+	ending in .new now, only when everything is ready
+	all are moved to their final place) and to prepare
+	DebIndices UDebIndices and DscIndices Options.
+
+	* add another test-case
+	* FIX the overflow bug in chunks_replacefield
+
+	* add DebIndices UDebIndices and DscIndices
+	  options for conf/distributions. This allows
+	  to change which Indices to generate for this
+	  type, or calls hook to even generate additional
+	  ones. (See docs/bzip.example).
+
+2005-02-14  Bernhard R. Link <brlink@debian.org>
+	* Some little changes to make splint
+	and valgrind happier.
+
+2005-02-13  Bernhard R. Link <brlink@debian.org>
+	* Remove some code duplication in main.c
+	  (and renamed _md5sums to _listmd5sums)
+	* change -b to not overwrite prior given
+	--listdir --distdir ...
+
+2005-02-12  Bernhard R. Link <brlink@debian.org>
+	* Some clean up of the code and added some
+	paranoia checks.
+
+2005-02-10  Bernhard R. Link <brlink@debian.org>
+	* No longer shutdown aptmethods when nothing is to do.
+	(This caused problems when index files are already in
+	 place but still packages to be downloaded).
+
+	* Do not warn about deleting _changed files from listdir.
+
+2005-02-08  Bernhard R. Link <brlink@debian.org>
+	* Do some more checks reading signed sources.
+
+	* Release 0.1.1
+
+2005-02-07  Bernhard R. Link <brlink@debian.org>
+	* Fix --onlyacceptsigned to safely handle unknown
+	keys or multiple keys of different state.
+
+2005-02-06  Bernhard R. Link <brlink@debian.org>
+	* Release 0.1
+
+2005-02-05  Bernhard R. Link <brlink@debian.org>
+	* Add --onlyacceptsigned to make include and includedsc only
+	accept signed files.
+
+	* Check Codename, Components and Architectures fields
+	of conf/distributions for sane values
+	* fix checks for strange characters
+
+2005-02-03  Bernhard R. Link <brlink@debian.org>
+	* When updating delete files lists/<codename>_ for
+	all updated distributions, which will not be needed any more.
+
+2005-02-01  Bernhard R. Link <brlink@debian.org>
+	* Add some missing files in Makefile.am so they end up in dist
+	* Add some #includes so that it also compiles without
+	warnings on sarge/i386
+
+	* --ignore= allows multiple options separated by commas.
+
+	* Tell about -b if conf/distributions cannot be found
+
+	* Tell which release.gpg file is missing the signature.
+
+	* Some tidy up to reduce number of warnings with -W
+
+	* Allow multiple keys specified in update's ReleaseCheck
+
+2005-01-29  Bernhard R. Link <brlink@debian.org>
+	* Be more descriptive with missing signatures.
+
+2005-01-28  Bernhard R. Link <brlink@debian.org>
+	* readd _detect command
+	* write recovery HOWTO how to deal with database corruptions
+
+2005-01-27(at least GMT)  Bernhard R. Link <brlink@debian.org>
+	* add a lockfile
+
+2005-01-26  Bernhard R. Link <brlink@debian.org>
+	* change FilterList to need a defaultaction given
+
+	* tidy up upgradelist.c and report errors properly
+
+	* ListHook is also called when --nolistsdownload is given
+
+	* update/checkupdate only download lists not already here
+
+2005-01-25  Bernhard R. Link <brlink@debian.org>
+	* Add ListHook keyword for external processing
+	  of the downloaded index file before updating.
+
+	* Add FilterList keyword for a list in the
+	format of dpkg --get-selections
+
+2005-01-24  Bernhard R. Link <brlink@debian.org>
+	* Make includedeb work again.
+
+	* Fix bugs in override file parsing
+
+	* add a listfilter command
+	* fix bug in term evaluation with non-existing fields
+	* fix another parsing bug when too few spaces where around
+	* implement T_NEGATED flag of parsing
+	* document listfilter command
+
+	* check conf/distributions conf/updates for unknown fields
+	  (to rule out typos, lines with # are ignored)
+
+2005-01-22  Bernhard R. Link <brlink@debian.org>
+	* Make -T work everywhere -A works.
+	* rename variables from suffix to packagetype
+
+	* allow colons in .changes filenames.
+	  (epoch with colon is stripped, but
+	   colons after that are allowed)
+
+	* Add tests/test.sh to test for basic
+	  things to work...
+
+	* fix bug that prevented Release regeneration
+	when a index-file is changed to zero entries.
+
+2005-01-19  Bernhard R. Link <brlink@debian.org>
+	* now also include, includedeb, includedsc
+	and update will remove files which are no
+	longer needed due to newer versions available,
+	except when --keepunreferencedfiles is given.
+
+	* change some verbosities of files and refereces
+
+2005-01-17  Bernhard R. Link <brlink@debian.org>
+	* remove short options -e -N -l -r -M -d -D -c -p -o
+	to make it more guessable (and reserving short options
+	for important and likely often called functions).
+
+	* add --keepunreferencedfile option (if you think
+	this is long, remember GNU getopt_long will accept
+	--keep, too)
+
+2005-01-15  Bernhard R. Link <brlink@debian.org>
+	* Seperate parsing and looking for allowed
+	values a bit more. Some more things can
+	be ignored with --ignore now.
+
+	* includedsc and includedeb only export
+	files that changed.
+
+	* remove now deletes files of removed packages
+	not referenced by any other package.
+
+2005-01-10  Bernhard R. Link <brlink@debian.org>
+	* Made updates using --force with failing parts
+	more graceful
+
+	* Make aptmethods less verbose
+
+2005-01-07  Bernhard R. Link <brlink@debian.org>
+	* Changed the meaning of the "Architectures:"
+	field in conf/distributions. Now a distribution
+	will have sources exactly when a "source" is in
+	this line.
+
+2005-01-05  Bernhard R. Link <brlink@debian.org>
+	* Only generate Release (and Release.gpg) files when
+	  something changed.
+
+	* Add a --nolistsdownload option to avoid update and
+	  checkupdate downloading all those lists again.
+
+2005-01-04  Bernhard R. Link <brlink@debian.org>
+	* Several code clean-ups, should not change anything....
+
+2004-12-30  Bernhard R. Link <brlink@debian.org>
+	* Tidy up (introduce bool_t and replace dpkgversion_isNewer)
+
+	* add a magic rule minus ("-") to mark all packages to be
+	  deleted.
+
+	* add a checkupdate command to show what would be done.
+
+2004-12-24  Bernhard R. Link <brlink@debian.org>
+	* Fixed a boolean inversion in the check if | is allowed
+	  in formulas.
+
+	* added FilterFormula to docs/reprepro.1
+
+2004-12-19  Bernhard R. Link <brlink@debian.org>
+
+	* change parsing of conf/distributions, the fields only
+	  copied to Release files can be omitted now. Additional
+	  it warns if required fields are missing intead of
+	  silently ignoring this block...
+
+2004-12-18  Bernhard R. Link <brlink@debian.org>
+
+	* remove now tells which packages were removed (with -v)
+	  and which could not be deleted. Indicies will only
+	  be exported when something was deleted.
+
+2004-12-18  Bernhard R. Link <brlink@debian.org>
+
+	* Modify remove to allow -T to specify the
+	  type (deb,dsc,udeb) to delete from.

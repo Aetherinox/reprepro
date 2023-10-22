@@ -1,0 +1,172 @@
+.TH CHANGESTOOL 1 "2010-03-19" "reprepro" REPREPRO
+.SH NAME
+changestool \- verify, dump, modify, create or fix Debian .changes files
+.SH SYNOPSIS
+.B changestool \-\-help
+
+.B changestool
+[
+\fIoptions\fP
+]
+\fI.changes-filename\fP
+\fIcommand\fP
+[
+\fIper-command-arguments\fP
+]
+.SH DESCRIPTION
+changestool is a little program to operate on Debian .changes files,
+as they are produced by \fBdpkg\-genchanges\fP(1) and used to feed
+built Debian packages into Debian repository managers like
+.BR  reprepro (1)
+or
+.BR dak .
+
+.SH EXAMPLES
+.P
+.B changestool \fIbloat.changes\fP setdistribution \fIlocal\fP
+.br
+will modify the \fBDistribution:\fP header inside \fIbloat.changes\fP
+to say \fIlocal\fP instead of what was there before.
+.P
+.B changestool \fIreprepro_1.2.0\-1.local_sparc.changes\fP includeallsources
+.br
+will modify the given file to also list \fB.orig.tar.gz\fP it does not list
+because you forgot to build it with
+.BR "dpkg\-buildpackage \-sa" .
+.P
+.B changestool \fIblafasel_1.0_abacus.changes\fP updatechecksums
+.br
+will update the md5sums to those of the files referenced by this file.
+(So one can do quick'n'dirty corrections to them before uploading to
+your private package repository)
+.P
+.B changestool \-\-create \fItest.changes\fP add \fIbla_1\-1.dsc bla_1\-1_abacus.deb\fP
+.br
+will add the specified files (format detected by filename,
+use \fBadddeb\fP or \fBadddsc\fP if you know it).
+If the file \fItest.changes\fP does not exist yet, a minimal one will be
+generated. Though that might be too minimal for most direct uses.
+
+.SH "GLOBAL OPTIONS"
+Options can be specified before the command. Each affects a different
+subset of commands and is ignored by other commands.
+.TP
+.B \-h \-\-help
+Displays a short list of options and commands with description.
+.TP
+.B \-o \-\-outputdir \fIdir\fP
+Not yet implemented.
+.TP
+.B \-s \-\-searchpath \fIpath\fP
+A colon-separated list of directories to search for files if they
+are not found in the directory of the .changes file.
+.TP
+.B \-\-create
+Flag for the commands starting with \fBadd\fP to create the \fB.changes\fP
+file if it does not yet exists.
+.TP
+.B \-\-create\-with\-all\-fields
+Flag for the commands starting with \fBadd\fP to create the \fB.changes\fP
+file if it does not yet exists.
+Unlike \fB\-\-create\fP, this creates more fields to make things like dupload
+happier.
+Currently that creates fake \fBUrgency\fP and \fBChanges\fP fields.
+.TP
+.B \-\-unlzma \fIcommand\fP
+External uncompressor used to uncompress lzma files to look
+into .diff.lzma, .tar.lzma or .tar.lzma within .debs.
+.TP
+.B \-\-unxz \fIcommand\fP
+External uncompressor used to uncompress xz files to look
+into .diff.xz, .tar.xz or .tar.xz within .debs.
+.TP
+.B \-\-lunzip \fIcommand\fP
+External uncompressor used to uncompress lzip files to look
+into .diff.lz, .tar.lz or .tar.lz within .debs.
+.TP
+.B \-\-bunzip2 \fIcommand\fP
+External uncompressor used to uncompress bz2 when compiled without
+libbz2.
+.SH COMMANDS
+.TP
+.BR verify
+Check for inconsistencies in the specified \fB.changes\fP file and the
+files referenced by it.
+.TP
+.BR updatechecksums " [ " \fIfilename\fP " ]"
+Update the checksum (md5sum and size) information within the specified
+\fB.changes\fP file and all \fB.dsc\fP files referenced by it.
+Without arguments, all files will be updated.
+To only update specific files, give their filename (without path) as
+arguments.
+.TP
+.BR setdistribution " [ " \fIdistributions\fP " ]"
+Change the \fBDistribution:\fP header to list the remaining arguments.
+.TP
+.BR includeallsources " [ " \fIfilename\fP " ]"
+List all files referenced by \fB.dsc\fP files mentioned in the \fB.changes\fP
+file in said file.
+Without arguments, all missing files will be included.
+To only include specific files, give their filename (without path) as
+arguments.
+
+Take a look at the description of \fB\-si\fP, \fB\-sa\fP and \fB\-sd\fP in
+the manpage of \fBdpkg\-genchanges\fP/\fBdpkg\-buildpackage\fP how to avoid
+to have to do this at all.
+
+Note that while \fBreprepro\fP will just ignore files listed in a \fB.changes\fP
+file when it already has the file with the same size and md5sum, \fBdak\fP
+might choke in that case.
+.TP
+.B adddeb \fIfilenames\fP
+Add the \fB.deb\fP and \fB.udeb\fP files specified by their filenames to
+the \fB.changes\fP file.
+Filenames without a slash will be searched
+in the current directory,
+the directory the changes file resides in
+and in the directories specified by the \fB\-\-searchpath\fP.
+.TP
+.B adddsc \fIfilenames\fP
+Add the \fB.dsc\fP files specified by their filenames to
+the \fB.changes\fP file.
+Filenames without a slash will be searched
+in the current directory,
+in the directory the changes file resides in
+and in the directories specified by the \fB\-\-searchpath\fP.
+.TP
+.B addrawfile \fIfilenames\fP
+Add the files specified by their filenames to
+the \fB.changes\fP file.
+Filenames without a slash will be searched
+in the current directory,
+in the directory the changes file resides in
+and in the directories specified by the \fB\-\-searchpath\fP.
+.TP
+.B add \fIfilenames\fP
+Behave like \fBadddsc\fP for filenames ending in \fB.dsc\fP,
+like \fBadddeb\fP for filenames ending in \fB.deb\fP or \fB.udeb\fP,
+and like \fBaddrawfile\fP for all other filenames
+.TP
+.B dumbremove \fIfilenames\fP
+Remove the specified files from the .changes file.
+No other fields (Architectures, Binaries, ...) are updated and
+no related files is removed.
+Just the given files (which must be specified without any \fB/\fP)
+are no longer listen in the .changes file (and only no longer in the
+changes file).
+
+.SH "SEE ALSO"
+.BR reprepro (1),
+.BR dpkg\-genchanges (1),
+.BR dpkg\-buildpackage (1),
+.BR md5sum (1).
+.SH "REPORTING BUGS"
+Report bugs or wishlist requests the Debian BTS
+(e.g. by using \fBreportbug reperepro\fP)
+or directly to <brlink@debian.org>.
+.br
+.SH COPYRIGHT
+Copyright \(co 2006-2009 Bernhard R. Link
+.br
+This is free software; see the source for copying conditions. There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

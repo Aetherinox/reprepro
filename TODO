@@ -1,0 +1,24 @@
+TODO:
+        think about a way to make removesrc work on all distributions ('*'?)
+	-> or make things like remove(src)/list/.. work with distribution globs...
+	write something for manual.html how to manually modify snapshots...
+	write more automated test-cases
+	 (not even run in the testcase yet: reoverride, ... (probably many))
+	finish import from incoming dir, implement sending mails to uploader
+	extend FilterList et al to specify type/architecture/component
+	add switch to only include if source is present
+	action to redownload missing pool/ files from some update-rules (looking for md5sum)
+	Fields to exclude architectures and components in update rules,
+	 (or alternatively allow ! in inclusion lists).
+
+half far goals:
+	rewrite error handling, caching error messages and handling Ctrl-C better.
+
+far goals:
+	check for unmeet Dependencies
+	      for unmeet Build-dependencies.
+	write dokumentation, some examples
+	allow multiple versions in a distribution (needs major rewrite I fear)
+	record timestamp when packages are added.
+	option to keep apt-get'able source to each binary (needs mutliple source versions)
+	switch from libdb?.? to sane database

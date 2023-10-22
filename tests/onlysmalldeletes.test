@@ -1,0 +1,142 @@
+set -u
+. "$TESTSDIR"/test.inc
+
+mkdir conf
+cat >conf/distributions <<EOF
+Codename: test
+Architectures: abacus source
+Components: all
+
+Codename: copy
+Architectures: abacus source
+Components: all
+Pull: rule
+EOF
+touch conf/updates
+cat >conf/pulls <<EOF
+Name: rule
+From: test
+EOF
+cat >conf/incoming <<EOF
+Name: i
+Tempdir: tmp
+Incomingdir: i
+Default: test
+EOF
+cat >conf/options <<EOF
+onlysmalldeletes
+EOF
+
+mkdir i
+cd i
+for i in $(seq 1 40) ; do
+PACKAGE=a$i EPOCH="" VERSION=$i REVISION="" SECTION="many" genpackage.sh
+mv test.changes a$i.changes
+done
+cd ..
+
+cat > pi.rules <<EOF
+stdout
+$(odb)
+-v2*=Created directory "./tmp"
+-v2*=Created directory "./pool"
+-v2*=Created directory "./pool/all"
+-v2*=Created directory "./pool/all/a"
+-v0*=Exporting indices...
+-v2*=Created directory "./dists"
+-v2*=Created directory "./dists/test"
+-v2*=Created directory "./dists/test/all"
+-v2*=Created directory "./dists/test/all/binary-abacus"
+-v6*= looking for changes in 'test|all|abacus'...
+-v6*=  creating './dists/test/all/binary-abacus/Packages' (uncompressed,gzipped)
+-v2*=Created directory "./dists/test/all/source"
+-v6*= looking for changes in 'test|all|source'...
+-v6*=  creating './dists/test/all/source/Sources' (gzipped)
+EOF
+
+for i in $(seq 1 40) ; do
+cat >>pi.rules <<EOF
+-v2*=Created directory "./pool/all/a/a$i"
+$(ofa "pool/all/a/a${i}/a${i}_${i}.dsc")
+$(ofa "pool/all/a/a${i}/a${i}_${i}.tar.gz")
+$(ofa "pool/all/a/a${i}/a${i}_${i}_abacus.deb")
+$(ofa "pool/all/a/a${i}/a${i}-addons_${i}_all.deb")
+$(opa "a${i}" unset 'test' 'all' 'source' 'dsc')
+$(opa "a${i}" x 'test' 'all' 'abacus' 'deb')
+$(opa "a${i}-addons" x 'test' 'all' 'abacus' 'deb')
+-v1*=deleting './i/a${i}.changes'...
+-v1*=deleting './i/a${i}_${i}.dsc'...
+-v1*=deleting './i/a${i}_${i}.tar.gz'...
+-v1*=deleting './i/a${i}_${i}_abacus.deb'...
+-v1*=deleting './i/a${i}-addons_${i}_all.deb'...
+EOF
+done
+
+testrun pi -b . processincoming i
+dodo rmdir i
+rm pi.rules
+
+cat >pull.rules <<EOF
+stdout
+-v0*=Calculating packages to pull...
+-v3*=  pulling into 'copy|all|source'
+-v5*=  looking what to get from 'test|all|source'
+-v3*=  pulling into 'copy|all|abacus'
+-v5*=  looking what to get from 'test|all|abacus'
+-v0*=Installing (and possibly deleting) packages...
+-v0*=Exporting indices...
+-v2*=Created directory "./dists/copy"
+-v2*=Created directory "./dists/copy/all"
+-v2*=Created directory "./dists/copy/all/binary-abacus"
+-v6*= looking for changes in 'copy|all|abacus'...
+-v6*=  creating './dists/copy/all/binary-abacus/Packages' (uncompressed,gzipped)
+-v2*=Created directory "./dists/copy/all/source"
+-v6*= looking for changes in 'copy|all|source'...
+-v6*=  creating './dists/copy/all/source/Sources' (gzipped)
+EOF
+
+for i in $(seq 1 40) ; do
+cat >>pull.rules <<EOF
+$(opa "a${i}" unset 'copy' 'all' 'source' 'dsc')
+$(opa "a${i}" x 'copy' 'all' 'abacus' 'deb')
+$(opa "a${i}-addons" x 'copy' 'all' 'abacus' 'deb')
+EOF
+done
+
+testrun pull -b . pull
+rm pull.rules
+
+sed -e 's/Pull: rule/Pull: -/' -i conf/distributions
+
+testrun - -b . pull 3<<EOF
+stdout
+-v0*=Calculating packages to pull...
+-v3*=  pulling into 'copy|all|source'
+-v5*=  marking everything to be deleted
+-v3*=  pulling into 'copy|all|abacus'
+#-v5*=  marking everything to be deleted
+-v0*=Installing (and possibly deleting) packages...
+stderr
+*=Not processing 'copy' because of --onlysmalldeletes
+EOF
+
+sed -e 's/Pull: -/Update: -/' -i conf/distributions
+testrun - -b . --noskipold update 3<<EOF
+stdout
+-v2*=Created directory "./lists"
+-v0*=Calculating packages to get...
+-v3*=  processing updates for 'copy|all|source'
+-v5*=  marking everything to be deleted
+-v3*=  processing updates for 'copy|all|abacus'
+#-v5*=  marking everything to be deleted
+stderr
+*=Not processing updates for 'copy' because of --onlysmalldeletes!
+EOF
+
+rm -r conf
+rm -r db
+rm -r pool
+rm -r dists
+rmdir tmp
+rmdir lists
+testsuccess

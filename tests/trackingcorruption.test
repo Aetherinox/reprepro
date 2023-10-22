@@ -1,0 +1,79 @@
+set -u
+. "$TESTSDIR"/test.inc
+
+dodo test ! -d db
+mkdir -p conf
+echo "export silent-never" > conf/options
+cat > conf/distributions <<EOF
+Codename: breakme
+Components: something
+Architectures: abacus coal source
+Tracking: all
+EOF
+
+DISTRI=breakme PACKAGE=aa EPOCH="" VERSION=1 REVISION=-1 SECTION="base" genpackage.sh -sa
+
+testrun - include breakme test.changes 3<<EOF
+stdout
+$(odb)
+-v2*=Created directory "./pool"
+-v2*=Created directory "./pool/something"
+-v2*=Created directory "./pool/something/a"
+-v2*=Created directory "./pool/something/a/aa"
+$(ofa 'pool/something/a/aa/aa-addons_1-1_all.deb')
+$(ofa 'pool/something/a/aa/aa_1-1_abacus.deb')
+$(ofa 'pool/something/a/aa/aa_1-1.tar.gz')
+$(ofa 'pool/something/a/aa/aa_1-1.dsc')
+$(opa 'aa-addons' x 'breakme' 'something' 'abacus' 'deb')
+$(opa 'aa-addons' x 'breakme' 'something' 'coal' 'deb')
+$(opa 'aa' x 'breakme' 'something' 'abacus' 'deb')
+$(opa 'aa' x 'breakme' 'something' 'source' 'dsc')
+$(ota 'breakme' 'aa')
+EOF
+rm aa_* aa-addons* test.changes
+
+dodo mv db/tracking.db .
+
+testrun - removesrc  breakme aa 3<<EOF
+stderr
+*=Nothing about source package 'aa' found in the tracking data of 'breakme'!
+*=This either means nothing from this source in this version is there,
+*=or the tracking information might be out of date.
+EOF
+
+testrun - --keepunreferenced remove breakme aa aa-addons 3<<EOF
+stderr
+*=Could not found tracking data for aa_1-1 in breakme to remove old files from it.
+stdout
+$(opd 'aa' unset breakme something abacus deb)
+$(opd 'aa-addons' unset breakme something abacus deb)
+$(opd 'aa-addons' unset breakme something coal deb)
+$(opd 'aa' unset breakme something source dsc)
+EOF
+
+dodo mv tracking.db db/
+
+testrun - --keepunreferenced removesrc breakme aa 3<<EOF
+stderr
+*=Warning: tracking data might be inconsistent:
+*=cannot find 'aa' in 'breakme|something|abacus', but 'pool/something/a/aa/aa_1-1_abacus.deb' should be there.
+*=cannot find 'aa' in 'breakme|something|source', but 'pool/something/a/aa/aa_1-1.dsc' should be there.
+*=There was an inconsistency in the tracking data of 'breakme':
+*='pool/something/a/aa/aa-addons_1-1_all.deb' has refcount > 0, but was nowhere found.
+*='pool/something/a/aa/aa_1-1_abacus.deb' has refcount > 0, but was nowhere found.
+*='pool/something/a/aa/aa_1-1.dsc' has refcount > 0, but was nowhere found.
+*='pool/something/a/aa/aa_1-1.tar.gz' has refcount > 0, but was nowhere found.
+stdout
+$(otd 'aa' '1-1' 'breakme')
+-v1*=4 files lost their last reference.
+-v1*=(dumpunreferenced lists such files, use deleteunreferenced to delete them.)
+EOF
+
+testrun - retrack breakme 3<<EOF
+stderr
+stdout
+-v1*=Retracking breakme...
+EOF
+
+rm -r db conf pool
+testsuccess
