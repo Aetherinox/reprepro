@@ -1,8 +1,3 @@
-Updates between 5.4.1 and 5.4.2:
-- Add SHA512 support (http://bugs.debian.org/855975)
-- uncompress: close the pipe after the child exits
-  (https://bugs.launchpad.net/ubuntu/+bug/2008508)
-
 Updates between 5.4.0 and 5.4.1:
 - Add --ignore=conflictingarchall (http://bugs.debian.org/697630)
 - Add example to notify processing of .changes files (https://bugs.debian.org/827816)

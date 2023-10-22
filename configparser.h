@@ -263,7 +263,7 @@ static retvalue configparser_ ## sname ## _set_ ## field(UNUSED(void *dummy), co
 	retvalue r; \
 	item->field ## _set = true; \
 	r = config_getflags(iter, name, hashnames, item->field, false, \
-			"(allowed values: md5, sha1, sha256, and sha512)"); \
+			"(allowed values: md5, sha1 and sha256)"); \
 	if (!RET_IS_OK(r)) \
 		return r; \
 	return RET_OK; \

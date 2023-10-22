@@ -684,7 +684,7 @@ static inline retvalue gotcapabilities(struct aptmethod *method, const char *chu
 
 static inline retvalue goturidone(struct aptmethod *method, const char *chunk) {
 	static const char * const method_hash_names[cs_COUNT] =
-		{ "MD5-Hash", "SHA1-Hash", "SHA256-Hash", "SHA512-Hash",
+		{ "MD5-Hash", "SHA1-Hash", "SHA256-Hash",
 		  "Size" };
 	retvalue result, r;
 	char *uri, *filename;

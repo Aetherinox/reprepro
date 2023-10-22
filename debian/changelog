@@ -1,10 +1,3 @@
-reprepro (5.4.2-1) experimental; urgency=medium
-
-  * Import new upstream version 5.4.2 (LP: #2008508)
-  * db-util is Multi-Arch: foreign now
-
- -- Bastian Germann <bage@debian.org>  Thu, 02 Mar 2023 15:03:30 +0100
-
 reprepro (5.4.1-1) experimental; urgency=medium
 
   * Install native build-deps for arch:all

@@ -16,7 +16,6 @@ enum checksumtype {
 #define cs_firstEXTENDED cs_sha1sum
 		cs_sha1sum,
 		cs_sha256sum,
-		cs_sha512sum,
 #define cs_hashCOUNT cs_length
 		/* must be last but one */
 		cs_length,
@@ -126,15 +125,11 @@ struct configiterator;
 #ifndef REPREPRO_SHA256_H
 #include "sha256.h"
 #endif
-#ifndef REPREPRO_SHA512_H
-#include "sha512.h"
-#endif
 
 struct checksumscontext {
 	struct MD5Context md5;
 	struct SHA1_Context sha1;
 	struct SHA256_Context sha256;
-	struct SHA512_Context sha512;
 };
 
 void checksumscontext_init(/*@out@*/struct checksumscontext *);

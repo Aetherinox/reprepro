@@ -39,7 +39,7 @@
 #include "package.h"
 
 static const char * const deb_checksum_headers[cs_COUNT] = {
-	"MD5sum", "SHA1", "SHA256", "SHA512", "Size"};
+	"MD5sum", "SHA1", "SHA256", "Size"};
 
 static char *calc_binary_basename(const char *name, const char *version, architecture_t arch, packagetype_t packagetype) {
 	const char *v;

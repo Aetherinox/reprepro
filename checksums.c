@@ -37,13 +37,13 @@
 #include "configparser.h"
 
 const char * const changes_checksum_names[] = {
-	"Files", "Checksums-Sha1", "Checksums-Sha256", "Checksums-Sha512"
+	"Files", "Checksums-Sha1", "Checksums-Sha256"
 };
 const char * const source_checksum_names[] = {
-	"Files", "Checksums-Sha1", "Checksums-Sha256", "Checksums-Sha512"
+	"Files", "Checksums-Sha1", "Checksums-Sha256"
 };
 const char * const release_checksum_names[cs_hashCOUNT] = {
-	"MD5Sum", "SHA1", "SHA256", "SHA512"
+	"MD5Sum", "SHA1", "SHA256"
 };
 
 
@@ -74,7 +74,7 @@ struct checksums {
 
 
 static const char * const hash_name[cs_COUNT] =
-	{ "md5", "sha1", "sha256", "sha512", "size" };
+	{ "md5", "sha1", "sha256", "size" };
 
 void checksums_free(struct checksums *checksums) {
 	free(checksums);
@@ -306,12 +306,6 @@ retvalue checksums_parse(struct checksums **checksums_p, const char *combinedche
 			while (*p != ' ' && *p != '\0')
 				*(d++) = *(p++);
 			n->parts[cs_sha256sum].len = (hashlen_t)(d - start);
-		} else if (type == '3') {
-			start = d;
-			n->parts[cs_sha512sum].ofs = d - n->representation;
-			while (*p != ' ' && *p != '\0')
-				*(d++) = *(p++);
-			n->parts[cs_sha512sum].len = (hashlen_t)(d - start);
 		} else {
 			while (*p != ' ' && *p != '\0')
 				*(d++) = *(p++);
@@ -531,12 +525,6 @@ retvalue checksums_combine(struct checksums **checksums_p, const struct checksum
 				while (*o != ' ' && *o != '\0')
 					*(d++) = *(o++);
 				n->parts[cs_sha256sum].len = (hashlen_t)(d - start);
-			} else if (typeid == '3') {
-				start = d;
-				n->parts[cs_sha512sum].ofs = d - n->representation;
-				while (*o != ' ' && *o != '\0')
-					*(d++) = *(o++);
-				n->parts[cs_sha512sum].len = (hashlen_t)(d - start);
 			} else
 				while (*o != ' ' && *o != '\0')
 					*(d++) = *(o++);
@@ -572,14 +560,6 @@ retvalue checksums_combine(struct checksums **checksums_p, const struct checksum
 				while (*b != ' ' && *b != '\0')
 					*(d++) = *(b++);
 				n->parts[cs_sha256sum].len = (hashlen_t)(d - start);
-			} else if (typeid == '3') {
-				if (improvedhashes != NULL)
-					improvedhashes[cs_sha512sum] = true;
-				start = d;
-				n->parts[cs_sha512sum].ofs = d - n->representation;
-				while (*b != ' ' && *b != '\0')
-					*(d++) = *(b++);
-				n->parts[cs_sha512sum].len = (hashlen_t)(d - start);
 			} else
 				while (*b != ' ' && *b != '\0')
 					*(d++) = *(b++);
@@ -1146,16 +1126,14 @@ void checksumscontext_init(struct checksumscontext *context) {
 	MD5Init(&context->md5);
 	SHA1Init(&context->sha1);
 	SHA256Init(&context->sha256);
-	SHA512Init(&context->sha512);
 }
 
 void checksumscontext_update(struct checksumscontext *context, const unsigned char *data, size_t len) {
 	MD5Update(&context->md5, data, len);
-// TODO: sha1 sha256 and sha512 share quite some stuff,
+// TODO: sha1 and sha256 share quite some stuff,
 // the code can most likely be combined with quite some synergies..
 	SHA1Update(&context->sha1, data, len);
 	SHA256Update(&context->sha256, data, len);
-	SHA512Update(&context->sha512, data, len);
 }
 
 static const char tab[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
@@ -1163,13 +1141,13 @@ static const char tab[16] = {'0', '1', '2', '3', '4', '5', '6', '7',
 
 retvalue checksums_from_context(struct checksums **out, struct checksumscontext *context) {
 	unsigned char md5buffer[MD5_DIGEST_SIZE], sha1buffer[SHA1_DIGEST_SIZE],
-		      sha256buffer[SHA256_DIGEST_SIZE], sha512buffer[SHA512_DIGEST_SIZE];
+		      sha256buffer[SHA256_DIGEST_SIZE];
 	char *d;
 	unsigned int i;
 	struct checksums *n;
 
 	n = malloc(sizeof(struct checksums) + 2*MD5_DIGEST_SIZE
-			+ 2*SHA1_DIGEST_SIZE + 2*SHA256_DIGEST_SIZE + 2*SHA512_DIGEST_SIZE + 30);
+			+ 2*SHA1_DIGEST_SIZE + 2*SHA256_DIGEST_SIZE + 30);
 	if (FAILEDTOALLOC(n))
 		return RET_ERROR_OOM;
 	setzero(struct checksums, n);
@@ -1198,18 +1176,6 @@ retvalue checksums_from_context(struct checksums **out, struct checksumscontext 
 	}
 	*(d++) = ' ';
 
-	*(d++) = ':';
-	*(d++) = '3';
-	*(d++) = ':';
-	n->parts[cs_sha512sum].ofs = d - n->representation;
-	n->parts[cs_sha512sum].len = 2*SHA512_DIGEST_SIZE;
-	SHA512Final(&context->sha512, sha512buffer);
-	for (i = 0 ; i < SHA512_DIGEST_SIZE ; i++) {
-		*(d++) = tab[sha512buffer[i] >> 4];
-		*(d++) = tab[sha512buffer[i] & 0xF];
-	}
-	*(d++) = ' ';
-
 	n->parts[cs_md5sum].ofs = d - n->representation;
 	assert (d - n->representation == n->parts[cs_md5sum].ofs);
 	n->parts[cs_md5sum].len = 2*MD5_DIGEST_SIZE;
@@ -1223,7 +1189,7 @@ retvalue checksums_from_context(struct checksums **out, struct checksumscontext 
 	assert (d - n->representation == n->parts[cs_length].ofs);
 	n->parts[cs_length].len = (hashlen_t)snprintf(d,
 			2*MD5_DIGEST_SIZE + 2*SHA1_DIGEST_SIZE
-			+ 2*SHA256_DIGEST_SIZE + 2*SHA512_DIGEST_SIZE + 30
+			+ 2*SHA256_DIGEST_SIZE + 30
 			- (d - n->representation), "%lld",
 			(long long)context->sha1.count);
 	assert (strlen(d) == n->parts[cs_length].len);
@@ -1234,8 +1200,7 @@ retvalue checksums_from_context(struct checksums **out, struct checksumscontext 
 bool checksums_iscomplete(const struct checksums *checksums) {
 	return checksums->parts[cs_md5sum].len != 0 &&
 	    checksums->parts[cs_sha1sum].len != 0 &&
-	    checksums->parts[cs_sha256sum].len != 0 &&
-		checksums->parts[cs_sha512sum].len != 0;
+	    checksums->parts[cs_sha256sum].len != 0;
 }
 
 /* Collect missing checksums.
@@ -1498,6 +1463,5 @@ const struct constant hashes_constants[cs_hashCOUNT+1] = {
 	{"md5", cs_md5sum},
 	{"sha1", cs_sha1sum},
 	{"sha256", cs_sha256sum},
-	{"sha512", cs_sha512sum},
 	{NULL, 0}
 }, *hashnames = hashes_constants;
