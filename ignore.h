@@ -36,8 +36,7 @@
 	IGN(wrongarchitecture) \
 	IGN(oldfile) \
 	IGN(longkeyid) \
-	IGN(missingfile) \
-	IGN(conflictingarchall)
+	IGN(missingfile)
 
 
 enum ignore {

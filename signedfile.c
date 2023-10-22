@@ -57,7 +57,7 @@ static retvalue check_signature_created(bool clearsign, bool willcleanup, /*@nul
 		     uidoptions != NULL && i < options->count ;
 		     i++) {
 			char *u = mprintf("%s -u '%s'", uidoptions,
-					options->values[i]);
+					options->values[0]);
 			free(uidoptions);
 			uidoptions = u;
 		}

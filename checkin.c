@@ -949,13 +949,12 @@ static retvalue changes_check(const struct distribution *distribution, const cha
 }
 
 static retvalue changes_checkfiles(const char *filename, struct changes *changes) {
-	struct fileentry *e, **pe;
+	struct fileentry *e;
 	retvalue r;
 
 	r = RET_NOTHING;
 
-	pe = &changes->files;
-	while ((e = *pe) != NULL) {
+	for (e = changes->files; e != NULL ; e = e->next) {
 		//TODO: decide earlier which files to include
 		if (e->type == fe_BYHAND) {
 			/* byhand files might have the same name and not
@@ -989,21 +988,6 @@ static retvalue changes_checkfiles(const char *filename, struct changes *changes
 			return RET_ERROR_OOM;
 		/* do not copy yet, but only check if it could be included */
 		r = files_canadd(e->filekey, e->checksums);
-		if (r == RET_ERROR_WRONG_MD5 &&
-		    e->architecture_into == architecture_all &&
-		    IGNORABLE(conflictingarchall)) {
-			struct fileentry *removedentry;
-
-			fprintf(stderr,
-"Ignoring '%s' as --ignore=conflictingarchall given and there is already a file with different contents of that name.\n",
-				e->name);
-
-			removedentry = e;
-			*pe = removedentry->next;
-			removedentry->next = NULL;
-			freeentries(removedentry);
-			continue;
-		}
 		if (RET_WAS_ERROR(r))
 			return r;
 		/* If is was already there, remember that */
@@ -1029,7 +1013,6 @@ static retvalue changes_checkfiles(const char *filename, struct changes *changes
 			}
 			free(fullfilename);
 		}
-		pe = &e->next;
 	}
 
 	return RET_OK;

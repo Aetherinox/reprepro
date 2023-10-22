@@ -1,25 +1,3 @@
-2022-08-17  Bastian Germann <bage@debian.org>
-
-	* debfilecontents.c: If data tar extraction fails try again as uncompressed
-	Some packages have an uncompressed data.tar.gz.
-	It seems that the "ar" code doesn't support reading a member more
-	than once, so it is necessary to retry the whole process in
-	uncompressed mode rather than just retrying reading the data member.
-	* signedfile.c: Prevent duplicated keyid in signing error message
-	Reported by: Uwe Kleine-König
-	* configure.ac: Release version 5.4.1 with patches from Debian bug tracker
-
-2022-08-17  Luca Capello <luca.capello@infomaniak.com>
-
-	* docs/mail-changes.example: new file to notify processing of .changes files
-
-2013-12-18  Bernhard R. Link <brlink@debian.org>
-
-	* checkin.c, ignore.h: Add --ignore=conflictingarchall
-	This is useful if autobuilders for more than one architecture will
-	build Architecture: all packages of the same version.
-	Based on a patch by Sjoerd Simons.
-
 2022-07-27  Bastian Germann <bage@debian.org>
 
 	Integrate Benjamin Drung's work

@@ -1,9 +1,3 @@
-Updates between 5.4.0 and 5.4.1:
-- Add --ignore=conflictingarchall (http://bugs.debian.org/697630)
-- Add example to notify processing of .changes files (https://bugs.debian.org/827816)
-- If data tar extraction fails try again as uncompressed (https://bugs.debian.org/863061)
-- Prevent duplicated keyid in signing error message (https://bugs.debian.org/1006766)
-
 Updates between 5.3.1 and 5.4.0:
 - Add shunit2 based tests (https://bugs.debian.org/857302)
 - Support multiple versions. (https://bugs.debian.org/570623)
