@@ -1,0 +1,120 @@
+* What it is:
+
+	This project is a lightweight feature complete manager of a debian
+	package (i.e. binary .deb and source .dsc+.tar.gz+.diff.gz) repository.
+	Emphasis is put on having all packages in the pool/-directory,
+	maximal checking of all sources.
+	generation of signed Release file, Contents, ...
+	Libraries needed are libdb{3,4.?,5.?} and libz.
+	Libraries used if available are libgpgme, libbz2 and libarchive.
+
+* Current status:
+
+	The main features work without problems. Some special use cases
+	might not be very well tested.
+
+* Some naming conventions:
+	basename: the name of a file without any directory information.
+	filekey: the position relative to the mirrordir.
+	(as found as "Filename:" in Packages.gz)
+	full filename: the position relative to /
+
+	architecture: The term like "sparc","i386","mips",...
+	component: Things like "main" "non-free" "contrib" ...
+		   (somtimes also called sections)
+	section: Things like "base" "interpreters" "oldlibs"
+		   (sometimes also called subsections)
+	type: The kind of packages, currently supported:
+		"deb", "udeb" and "dsc".
+	target: The smallest unit packages are in. A target
+		is specified by the codename of the distribution
+		it is in, the architecture, component and type.
+		When architecture is "source" exactly when
+		the type is "dsc".
+	identifier: an internal string to specify a target,
+		it has the form "<codename>|<component>|source"
+		for type dsc, "<codename>|<component>|<architecture>"
+		for type deb and "u|<codename>|<component>|<architecture>"
+		for type udeb.
+
+	md5sum: The checksum of a file, being in the format
+		"<md5sum of file> <length of file>"
+
+
+* Differences to how other standard tools handle the situation:
+
+ - mirroring:
+ 	This makes no real mirror of the distribution, but
+	only of it contents. Thus the Index-files will
+	be different. (And thus no longer can be verified
+	by the offical signatures). This means people using
+	this mirror have to trust you to not include anything
+	ugly, as they can only check your signature directly.
+	(Or in other words: not useful for mirroring things
+	 to be used by strangers).
+ - location:
+ 	The directory layout under pool/ is only divided
+	by the component and the sourcename. Ecspecially
+	woody and updates/woody will share the same space,
+	thus avoiding multiple instances of the same file.
+	(Can also cause trouble in the rare cases, when both
+	 have a file of the same name with different md5sum.
+	 Using -f can help here).
+ - 'byhand'-section
+ 	This is currently just implemented as alias for '-',
+	to make sure lack of implementation does not cause them
+	to land in a byhand-section...
+ - Override files:
+ 	Only the ExtraOverride style of apt-ftparchive(1) is
+	supported.
+	(i.e. "packagename Section section\npackagename Maintainer maintainer\n")
+	Note that other than apt-ftparchive case is most likely
+	to be significant. (Having the wrong case in might also
+	cause havoc in apt-ftparchive, as that changes the case of
+	the fieldname, which might confuse other programms...)
+
+* Things that might be interesting to know:
+
+ - guessing the component:
+ 	If inserting a binary or source package without naming
+	an component, this program has to guess of course.
+	This will done the following way: It will take the
+	first component with the name of the section, being
+	prefix to the section, being suffix to the section
+	or having the section as prefix or any.
+	Thus having specifiend the components:
+	"main non-free contrib non-US/main non-US/non-free non-US/contrib"
+	should map .e.g
+	"non-US" to "non-US/main" and "contrib/editors" to "contrib",
+	while having only "main non-free and contrib" as components should
+	map e.g. "non-US/contrib" to "contrib" and "non-US" to "main".
+
+	NOTE: Always specify main as the first component, if you want things
+	      to end up there.
+	NOTE: unlike in dak, non-US and non-us are different things...
+
+* How to keep multiple versions
+
+ - The default behavior of this reprepro is kept to version 5.3.1's behavior.
+ - To keep multiple versions of the same package in the archive,
+   you have to set the "Limit" option to the desired maximum amount (or to 0 for unlimited).
+ - See the description in the man page for details.
+
+* Database layout changes for multiple versions
+
+ - The database layout changes in version 5.4.0. The difference is as following:
+
+	upstream
+	* packages.db maps "package name" to "control file" without duplicates
+	* no packagenames.db
+
+	multiple versions
+	* packages.db maps "package name|version" to "control file" without duplicates
+	* packagenames.db maps "package name" to "package name|version"
+	  allowing duplicates and duplicates sorted by dpkg --compare-versions descending
+
+ - Automatic upgrade
+
+	The first time the database is opened by reprepro with multiple versions support,
+	the database will be upgraded from the upstream layout to the multiple versions layout.
+	*Warning*: There is no way back (but could be done with a simple Python script)!

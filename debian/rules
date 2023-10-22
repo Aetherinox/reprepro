@@ -1,0 +1,47 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+#export DH_VERBOSE=1
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+ifneq (,$(filter reprepro-nolibarchive,$(DEB_BUILD_OPTIONS)))
+	ARCHIVEFLAGS= --without-libarchive
+else
+	ARCHIVEFLAGS= --with-libarchive
+endif
+
+%:
+	dh $@
+
+override_dh_autoreconf:
+	autoreconf -i
+
+override_dh_auto_configure:
+	dh_auto_configure -- --with-libbz2 --with-liblzma --with-libgpgme $(ARCHIVEFLAGS)
+
+override_dh_auto_install:
+	$(MAKE) install DESTDIR=$(CURDIR)/debian/reprepro
+	install -D -m 644 docs/reprepro.bash_completion debian/reprepro/usr/share/bash-completion/completions/reprepro
+	install -D -m 644 docs/reprepro.zsh_completion debian/reprepro/usr/share/zsh/vendor-completions/_reprepro
+
+override_dh_installchangelogs:
+	dh_installchangelogs ChangeLog
+
+override_dh_gencontrol:
+	grep -v '^reprepro:.*=' debian/reprepro.substvars > debian/reprepro.substvars.new
+	mv debian/reprepro.substvars.new debian/reprepro.substvars
+#	# if compile without libarchive, we need the program ar from binutils available
+	if test -f ar.o && grep -q libarchive debian/reprepro.substvars ; then \
+		echo "reprepro:Depends=" >> debian/reprepro.substvars ; \
+	else \
+		echo "reprepro:Depends=binutils" >> debian/reprepro.substvars ; \
+	fi
+#	# warn if some dh_start to add some new dependencies, otherwise quiet
+#	# the error about an unknown variable...
+	@if grep -s "^misc:Depends=" debian/reprepro.substvars ; then \
+		echo "Warning: new misc:Depends found in substvars" ; \
+	else \
+		echo "misc:Depends=" >> debian/reprepro.substvars ; \
+	fi
+	dh_gencontrol

@@ -1,0 +1,735 @@
+Updates between 5.4.1 and 5.4.2:
+- Add SHA512 support (http://bugs.debian.org/855975)
+- uncompress: close the pipe after the child exits
+  (https://bugs.launchpad.net/ubuntu/+bug/2008508)
+
+Updates between 5.4.0 and 5.4.1:
+- Add --ignore=conflictingarchall (http://bugs.debian.org/697630)
+- Add example to notify processing of .changes files (https://bugs.debian.org/827816)
+- If data tar extraction fails try again as uncompressed (https://bugs.debian.org/863061)
+- Prevent duplicated keyid in signing error message (https://bugs.debian.org/1006766)
+
+Updates between 5.3.1 and 5.4.0:
+- Add shunit2 based tests (https://bugs.debian.org/857302)
+- Support multiple versions. (https://bugs.debian.org/570623)
+- Add the commands move, movesrc, movematched, movefilter
+- Add Limit and Archive option
+
+Updates between 5.3.0 and 5.3.1:
+- fix manpage to add the behaviour if reprepro is linked against liblzma
+- mark 'dumpcontents' command as deprecated
+- Add Zstd support
+
+Updates between 5.2.0 and 5.3.0:
+- no Binary field in a .changes file is no longer an error
+  but handled like an empty Binary field. (Needed to still
+  accept source only .changes files by dpkg > 1.19.3).
+
+Updates between 5.1.1 and 5.2.0:
+- mark .lz support as deprecated
+- add _listcodenames command
+- allow to set Signed-By header via conf/distributions
+- add support for .asc files in source packages
+- some documentation improvements
+- allow '+' character in method-URI
+
+Updates between 5.1.0 and 5.1.1:
+- improve error handling when extracting .deb file contents
+- fix many spelling mistakes
+
+Updates between 5.0.0 and 5.1.0:
+- .gz, .bz2 and .lzma built-in uncompressors now also support
+  concatenated files (as gunzip, bunzip2 and unxz).
+- added add unreferencesnapshot and removereference commands
+- fixed (Deb|Dsc)Indices parsing (did add a default Release even
+  if none was specified)
+- some documentation improvements
+
+Updates between 4.18.0 and 5.0.0:
+- some code refactoring (no new features or bugfixes, only chances to break stuff)
+- require new status 103 behaviour from apt methods
+  (i.e. http from squeeze and before no longer supported)
+- add support for .buildinfo files in .changes files
+
+Updates between 4.17.0 and 4.17.1:
+- fix bug with 'flood' if there are binaries belonging to different versions
+  of the same source package
+- fix output caused by 'warning' FilterList files.
+
+Updates between 4.16.1 and 4.17.0:
+- some manpage fixes
+- '#' in filterlists are comments
+- fix parsing of strangly formatted control files
+- add Exportoptions: noexport option in conf/distributions
+- add Permit: unlisted_binary option in conf/incoming
+- -dbgsym are not differently looked for in changes' Binary field
+
+Updates between 4.16.0 and 4.16.1:
+- fix segfault in verbose exporting of xzed indices
+
+Updates between 4.15.0 and 4.16.0:
+- add support for xz uncompression using liblzma instead of unxz
+- enable using liblzma by default (if found and not --without-liblzma is given)
+- all example scripts in python now use python3
+
+Updates between 4.14.1 and 4.15.0:
+- fixes to outsftphook example, new xz example, manpage improvements
+- support for native Packages.xz generation using liblzma (disabled by default)
+
+Updates between 4.13.1 and 4.14.0:
+- repairdescriptions also repairs udeb descriptions
+- automatically add long descriptions when updating
+  packages from a source that does not have them
+- ignore Extra-Source-Only source packages by default
+- some small bugfixes and improvements
+
+Updates between 4.13.0 and 4.13.1:
+- fix bug in restore
+- fix percomponent udeb Contents filenames
+- add support for sources listing architecture wildcards to build-needing
+
+Updates between 4.12.5 and 4.13.0:
+- new commands: deleteifunreferenced repairdescriptions lsbycomponent
+- add ${$basename}, ${$filekey} and ${$fullfilename} to --listformat
+- reject absurd large values in ValidFor header
+- add --endhook, --outhook
+- SignWith: can now also contain external scripts for signing
+- several small cleanups and fixes
+
+Updates between 4.12.4 and 4.12.5:
+- various documentation improvements
+- fix bitrot in non-libarchive code
+
+Updates between 4.12.3 and 4.12.4:
+- fix bug when only generating .bz2 indices
+- ignore diff comments about unterminated lines when parsing .diff files
+
+Updates between 4.12.2 and 4.12.3:
+- actually set REPREPRO_CONFIG_DIR in hooks as documented in manpage
+- support 103 redirect message from apt's http method.
+  (works best with apt >= 0.9.4)
+
+Updates between 4.12.1 and 4.12.2:
+- fix error with uploader files with more than 16 group members
+
+Updates between 4.12.0 and 4.12.1:
+- fix bash and zsh completion to work with config directories
+- add experimental -A, -C, -T support to the pull/update family of commands
+
+Updates between 4.11.0 and 4.12.0:
+- get InRelease from remote repositories (to disable use new GetInRelease: no)
+- always put Package field first in indices
+- support getting packages from remote repositories without md5sums.
+
+Updates between 4.10.0 and 4.11.0:
+- Contents files default location is now "percomponent compatsymlink".
+- unify handling of "unknown" section.
+
+Updates between 4.9.0 and 4.10.0:
+- allow "!include:" in conf/{distributions,updates,pulls,incoming}
+- conf/{distributions,updates,pulls,incoming} can be directories
+- add FilterList keyword 'supersede' to remove if upstream has newer pkgs
+- improve changelogs.example (CHANGELOGDIR empty stored directly in pool/)
+
+Updates between 4.8.2 and 4.9.0:
+- build-needing now allows one to look for things for 'all' and 'any'
+- improve error messages when parsing config files
+- uploader files now can 'include' other files.
+
+Updates between 4.8.1 and 4.8.2:
+- rredtool: produce .diff/Index files that reprepro can understand.
+- warn if uploader files contains key ids too long to handle
+- make .diff/Index parsing errors non-fatal
+
+Updates between 4.8.0 and 4.8.1:
+- fix NULL-dereference with broken Packages.diff/Index files
+
+Updates between 4.7.0 and 4.8.0:
+-  add compatsymlink nocompatsymlink Contents: options
+   (and document that the default will change in the future)
+
+Updates between 4.6.1 and 4.7.0:
+- add 'redochecksums' command
+- add percomponent and allcomponents to Contents: flags
+
+Updates between 4.6.0 and 4.6.1:
+- fix message given when replacing a package with the same version
+- fix bug not deleting packages if none added in update
+
+Updates between 4.5.1 and 4.6.0:
+- add 'FilterSrcList' for update and pull
+- ignore leading comments in control files
+
+Updates between 4.5.0 and 4.5.1:
+- 'check' also checks if architectures match
+- buffix in 'sourcemissing', 'unusedsources' and 'reportcruft' without tracking
+- fix 'pull' copying packages with wrong architecture
+- compile with libdb5
+
+Updates between 4.4.0 and 4.5.0:
+- support reading of Release files without MD5Sum
+- add all missing Checksums-* when importing from remote repositories
+- add 'reportcruft' command
+
+Updates between 4.3.0 and 4.4.0:
+- SignWith allows multiple arguments to denote multiple keys to sign wtih
+- add removesrcs command (like removesrc can you can remove more at once)
+- uploaders files can have groups of uploaders and depend on the
+  distribution to upload to (to share uploaders file between distributions)
+- add 'sizes' command.
+
+Updates between 4.2.0 and 4.3.0:
+- add special "$Delete" override field to get rid of fields
+- add support for ButAtuomaticUpgrades
+- add 'unusedsources' and 'sourcemissing' commands
+- add support for lzip compressed files
+- bugfixes ($component overrides, compiling without libbz2, with gcc4.5)
+
+Updates between 4.1.1 and 4.2.0:
+- allow patterns in override files
+- apply override files when doing 'pull' and 'update'
+- add special '$Component' override field
+- create InRelease file additionally to Release.gpg
+
+Updates between 4.1.1 and 4.1.2:
+- fix parsing of .orig-*.tar.* lines in .changes files,
+  especially do not choke on _ characters.
+- add --onlysmalldeletes option to limit scope of update and pull
+
+Updates between 4.1.0 and 4.1.1:
+- fix calling --changes Log:-notifiers from processincoming
+- add '${$source}' and '${$sourceversion}' to --list-format
+
+Updates between 4.0.2 and 4.1.0:
+- rredtool can be used as index hook to maintain a .diff/Index file.
+- properly handle relative LogDir in conf/incoming
+- add ByHandHooks to conf/distributions (only used by processincoming yet)
+- fix extraction of exactly one of section or priority from a tar file.
+- new byhand statement for uploaders files and ByHandHook for configuration
+
+Updates between 4.0.1 and 4.0.2:
+- add support for xz de-compression
+- fix regression (since 3.8.0) breaking arch1>arch2 update rules.
+- some small warning output fixes in update code
+
+Updates between 4.0.0 and 4.0.1:
+- strip the last '/' from Method and Fallback in conf/updates to work
+  around problems in some apt methods. (to get old behaviour, use "//")
+- 'check' now warns if a file was missing but could be readded
+- much more permissive check for libdb. You are on your own now to check
+  what version to build against.
+
+Updates between 3.12.1 and 4.0.0:
+- disable old files.db handling (remove all support but
+  translatelegacyfilelists), remove --oldfilesdb options
+- remove --overridedir
+- bugfixes in documentation and bash/zsh completion
+
+Updates between 3.12.0 and 3.12.1:
+- fix problems with libgpgme 1.2.0
+
+Updates between 3.11.1 and 3.12.0:
+- warn if directories are relative to the currect directory but do not start
+  with './'
+- directories starting '+b/' '+o/' and '+c/' are relative to basedir, outdir
+  or confdir.
+- FakeComponentPrefix now no longer adds its arguments to components already
+  having it and shortens their dist directories to not duplicate that either.
+- -A, -C and -T can have multiple arguments now, separated with '|'.
+- new 'flood' action to align architecture all packages
+- new '--show-percent' option
+- warn if old legacy files.db is still used
+- add new translatelegacyfilelists command for easier migration.
+  (just a collectnewchecksums and deleting that file was enough, though)
+
+Updates between 3.11.0 and 3.11.1:
+- new changestool option --create-with-all-fields
+- new --morguedir option (or morguedir in conf/options, of course)
+- new $Version, $Source, $SourceVersion et al on formulas
+- bugfixes
+
+Updates between 3.10.0 and 3.11.0:
+- new --list-max and --list-skip options
+- new glob-matching in formulas
+  (e.g. "reprepro listfilter codename 'Package (% linux-image-*)'")
+- new listmatched, removematched, copymatched and restorematched
+- new build-needing command to list source packages likely to need
+  a build for a given architecture.
+- pull, predelete and update call retrack on
+  distributions with tracking enabled.
+
+Updates between 3.9.2 and 3.10.0:
+- fix bug of ListHook not used if in the From: rule of a rule.
+- add ListShelllHook
+- add _listdbidentifiers and _listconfidentifiers
+- add --list-format to change format of list and listfilter
++ rewrite Release.gpg verification code:
+- more hops needed to use expired or revoked keys
+- earlier check of keys. now all keys in VerifyRelease must be known to gpg
+- subkeys are accepted if the key-id is appended with '+'.
+* improve uploader lists:
+- subkeys are accepted if key-if is appended with '+'
+- new 'anybody' while 'unsigned' now means really unsigned
+- new conditions to look as sourcename, binary names and sections
+
+Updates between 3.9.1 and 3.9.2:
++ fix bug (caught by assertion if there is no old index file)
+  that inverts the logic of downloading .diff files when there is no
+  DownLoadListsAs line.
+
+Updates between 3.9.0 and 3.9.1:
++ fix error of misinterpreting newer libz return value
+  when extracting section from a .dsc.
+
+Updates between 3.8.2 and 3.9.0:
++ deprecate old (pre 3.3) file database format. Warn loudly
+  when the database is still using that format.
++ new features
+- support Sources/Package.diff downloading
+  (Use DownloadListsAs if you want to force .gz downloading instead)
+- support falling back to other compressions of index files when
+  not downloadable at first.
+- changestool can now also look in .lzma files for .dsc section/priority
+- delete .new files in dists/ on error unless --keeptemporaries
+- new 'warning' state for FilterList
+- set REPREPRO_FROM and REPREPRO_CAUSING_RULE in some log notifiers
++ bug fixes:
+- re-enable workaround for apt-methods having problem with existing
+  files which got lost in 3.8
+- fix bug not looking at DownloadListsAs in all cases
+- bugfix in misparsing some .diff files for section/priority retrieval
+- do not stop when incomplete downloads or other stray files are in the pool
+
+Updates between 3.8.1 and 3.8.2:
+- add ReadOnly option for conf/distributions
+- support byhand and raw-* files in include and processincoming
+- allow uploading log files with .changes files
+- new LogDir in conf/incoming to store changes and log files.
+
+Updates between 3.8.0 and 3.8.1:
+- make filtercopy work again
+- fix bug not allowing source packages from flat
+  repositories without Directory fields to be imported
+- add gnupghome option to make GNUPGHOME setable via conf/options
+
+Updates between 3.8.0~alpha and 3.8.0:
+- add support for generating Valid-Until fields in Release files
+
+Updates between 3.6.3 and 3.8.0~alpha:
++ different small improvements:
+- log notifiers can be limited to a specific command with --via
+- upgradeonly value for FilterList to only include a package if
+  an older one is already there.
+- new --keepunusednewfiles to keep files just added to the pool
+  but later in the same run decided to no longer be needed
+  (for example because a package was not added because of later
+  detected errors).
+- --keepunreferenced and actions implying this now print
+  the number of files that lost their last reference
+- new dumpupdate and dumppull actions that are like checkupdate and
+  checkpull put with output easier parseable
+- new ls action to list a package in all distributions
++ bugfixes
+- if FilterFormula excludes a package, FilterList can no longer put
+  a package on hold.
++ improved decompression support
+- support looking into lzma compressed .deb, .diff and .tar files.
+- support for external helpers for uncompression
+  (to speed up uncompression on multiple processors, also reprepro
+   can now be compiled without libbz2 and zlib if needed)
+- support for downloading and using bz2 and lzma index files in updates
++ major changes to index file retrieval on updates:
+- iteratedupdate action was removed
+- update-rules can inherit settings from others
+- ListHooks are now called once per usage
+  (mostly only makes a difference for flat upstream repositories)
+- --nolistsdownload no longer includes --noskipold and checks checksums
+  of the lists files.
+- format of lists/ directory contents changed
+  (I doubt anyone cares for the files in there, but if you
+   do, you have been informed hereby that it looks differently)
+- lists/ directory no longer auto-cleaned,
+  thus --(no)keepuneeded longer exists and
+  new action cleanlists to clean files no longer usable...
++ visible effects of internal refactorisations:
+- multiple checks for identifiers more strict now
+- some fields in conf/distributions need a specific order now
+  (Architectures and Components before things using the values
+  defined by those)
+
+Updates between 3.6.2 and 3.6.3:
+- fix sha256 generation of very large files, thanks to Max Bowsher
+- allow multiple export hooks at once
+- use libgpg-error directly (to avoid some warnings in dependency analysis)
+
+Updates between 3.6.1 and 3.6.2:
+- --nooldfilesdb is the default now, create new repositories
+  with --oldfilesdb if you do not want to destroy them by accidentially
+  running reprepro versions before 3.0.0 on them...
+- fix content reading of overlong .deb files
+- fix parsing of flat repositories without Directory in Sources
+- fix tracking database corruption in removesrc with outdated tracking data
+  [previously believed hard to trigger, but outdated tracking data suffices]
+- many improvements and less spelling errors in manpage
+
+Updates between 3.6.0 and 3.6.1:
+- fix reoverride
+- fix bz2 compression (newer libbz2 sometimes uses more return codes
+  than previous versions, triggering a bug in reprepro)
+
+Updates between 3.5.2 and 3.6.0:
+- add IgnoreHashes option
+- allow list to list all packages if not package name specified.
+- support retrieving packages from flat repositories
+- speed up updating by buffering zlib's reading of index files
+- remove iteratedupdate
+- multiple little but nasty bugs fixed
+
+Updates between 3.5.1 and 3.5.2:
+- fix bug in optionsfilename generation introduced in 3.5.1
+- add FakeComponentPrefix to cope with apt's problems with
+  / in distribution names.
+
+Updates between 3.5.0 and 3.5.1:
+- support upcoming version 3 format source packages
+  (priority and section extraction only for wig&pen and quilt format)
+- set environment variables REPREPRO_*_DIR when calling hooks.
+  (note that those are set to the last set values, so for example
+   REPREPRO_CONF_DIR will be the directory with 'distributions' in it,
+   not necessarily the one with 'options' in it that was parsed).
+- other minor bugfixes
+
+Updates between 3.4.2 and 3.5.0:
+- allow suite names as command line arguments
+  (when there is not codename of this name and only one distribution
+  has this suite name)
+- generate and check Sha256, too.
+- changestool puts Files: last in .changes files so etch's dupload
+  works.
+
+Updates between 3.4.1 and 3.4.2:
+now really fix the nasty bug with notifiers 3.4.1 should
+have fixed and be more verbose when rejecting packages because
+of problems with a key
+
+Updates between 3.4.0 and 3.4.1:
+bugfixes only (though of the ugly segfaults kind)
+
+Updates between 3.3.2 and 3.4.0:
++ bugfixes:
+- no longer mix up -S and -P command line arguments (introduced in 3.0.1)
+- some field overriding was erroneously case dependent.
+- many spelling corrections
++ improvements:
+- more support for Checksums-Sha1
+- add copysrc and copyfilter commands (improve copy w.r.t tracking)
+- add restore restoresrc restorefilter and _addpackage commands
+- warn about some impossible -A -T combinations.
+- set fake Suite: in snapshots to quiet apt's signature checks.
+- add REPREPRO_CAUSING_FILE environment variable in log notifiers.
+- update expected fields to new dpkg-dev
+- try to extract missing section and priority of .dsc files from
+  .diff.gz and .tar.gz.
+
+Updates between 3.3.1 and 3.3.2:
+- bugfix in includedeb and a little bit code cleanup
+
+Updates between 3.3.0 and 3.3.1:
+- multiple bugfixes
+
+Updates between 3.1.0 and 3.3.0:
+- add support for different checksums.
+  The new checksums.db which stores all the checksums, while
+  files.db still only stores md5sum and is the canonical information,
+  when it exists. This way repositories keep backward compatible.
+  A repository generated with --nooldfilesdb only has checksums.db
+  and will not work with reprepro version prior to 3.3.
+  New command collectnewchecksums to calculate checksums missing
+  in the database.
+
+Updates between 3.0.1 and 3.1.0:
+- add sha1 hashes to the generated Release files.
+  the changes semantics needed in the release.caches.db file for this
+  should be transient. This will only cause index files without
+  uncompressed variants to be regenerated once upon upgrade, but
+  switching back and forth between previous versions and this or
+  later versions will cause regenerating of unchanged files.
+- internal changes of reading of text files (.dsc/.changes/Release/
+  control from .deb). Should not make any difference with normal input,
+  and make the situation better with strange input.
+- source packages now can have .tar und .diff lzma compressed
+  (still missing is support for lzma compressed binary packages)
+
+Updates between 3.0.0 and 3.0.1:
+- the default for --export is now "changed", as the old default was
+  just too confusing most of the time.
+- translatefilelist know also can convert databases with old and new
+  style entries
+
+Updates between 2.2.4 and 3.0.0:
+- new config file parser:
+  * many error messages now with line numbers
+  * native support of comments (i.e. lines starting with # are now ignored,
+    instead of treated as ignored headers, # within lines is now comment, too)
+  * better support of tabs
+  * meaning of empty fields changed, empty now means nothing and not all.
+- always parse the whole distributions file first before doing anything else
+  (avoids actions started in the wrong base directory and helps to catch more
+   disambiguities, may lead to the need of a valid config file for some actions
+   not needing one, though).
+- check pull and update rules to not list any architectures or components that
+  will never be used, so typos won't go unnoticed.
+- obsolete --overridedir and searching files in overrides/ directory by default.
+  This places are still search, but so is the configuration directory now and
+  future version will stop accepting --overridedir and not search in that
+  directory.
+- added db/version file to document database format
+  (so future versions can warn about incompatibilities)
+- cleaned up tracking handling a bit:
+  * retrack no longer created tracking data for distributions without tracking
+  * retrack only recreates usage data, not all data
+    (so .changes files and old versions are no longer lost when run)
+    also references from tracking data are now refreshed by rereferences instead
+  * removealltracks now needs explicitly needs distribution names
+  * tidytracks now removes all tracking data from a distribution without tracking
+  * clearvanished removes tracking data from vanished distributions.
+- make update's ListHook relative to confdir (unless absolute)
+- added removesrc and removefilter
+- new format for contents.cache.db. Only needs half of the disk space and runtime
+  to generate Contents files, but you need to run translatefilelists to translate
+  the cached items (or delete your contents.cache.db and let reprepro reread
+  all your .deb files). Also format and meaning of the Contents-fields changed, a
+  rate no longer can be specified.
+
+Updates between 2.2.3 and 2.2.4:
+- [SECURITY] fix bug causing a Release.gpg with only
+  unknown signatures considered as properly signed.
+
+Updates between 2.2.2 and 2.2.3:
+- add support for binNMUs (i.e. .changes files having a Version: that is not
+  the source version).
+- add zsh auto-completions script
+
+Updates between 2.2.1 and 2.2.2:
+- processincoming can be limited to a single .changes file
+- fix to support apt-methods stating Send-Config: false
+- set GPG_TTY when stdin is a terminal to ease usage of pinentry-curses
+
+Updates between 2.2.0 and 2.2.1:
+- fix mixup of the name of the --spacecheck option
+- fix missing options in bash completions
+- fix segfault when including changes without notificators
+
+Updates between 2.1.0 and 2.2.0:
+- renamed cleartracks in removealltracks
+- new notifier type for accepted changes files
+- bugs fixed:
+  * not tidy tracking dependencies on package remove
+  * forgot to call some slow notifiers in processincoming
+- new --wait-for-lock option
+- check free space on update (new --spaceheck option to switch this off)
+- extended the changestool helper (add, adddsc, addrawfile, setdistribution)
+- processincoming changes:
+  * reports and error if a package is not included due to an already existing
+    newer version.
+  * allow ignoring of unused files and newer versions (Permit:)
+  * option when to delete rejected or faulty package (Cleanup:)
+- include command names incldued .changes files like processincoming does
+
+Updates between 2.0.0 and 2.1.0:
+- add --silent option
+- change some status output to stdout instead of stderr.
+- fix some uncessary exporting of index files
+- fix bug in term parsing (for FilterFormula and the like)
+- add Log: mechanism to log to file and execute external helpers
+- example-script to generate a packages.debian.org/changelogs like
+  hierachy with changelog and copyright files.
+
+Updates between 1.3.1 and 2.0.0:
+- add "adddeb" action to changestool
+- fix bug in manpage ("accept" should have been "allow" for uploaders)
+- new AlsoAcceptFor:-header for conf/distributions to allow more fine
+  controled which distributions to allow than just codename/suite
+  or everything (via --ignore=wrongdistribution)
+- fail cleanly when getting a .dsc without Format header
+- fix bug in non-libarchive filelist extraction on large lists
+- add processincoming command to scan an incoming directory and add
+  packages from there. (this needed some refactorisations of other
+  code, so beware)
+- add gensnapshot command
+
+Updates between 1.3.0 and 1.3.1:
+- bugfix in changestool updatechecksums
+
+Updates between 1.2.0 and 1.3.0:
+- now uses libgpgme11 instead of libgpgme6.
+- remove --onlyacceptsigned switch (soon to be be replaced by something
+    useable, hopefully)
+- only reject a package because of signatures if it only has bad signatures
+  and no good one. (Rejecting a package because of a missing key when
+  it would have processed without signature did not really make sense)
+- new --ignore=brokensignatures to also accept packages with broken signatures
+  without any valid signature.
+- Now looks at the Binary: and Version: fields of a .changes file.
+  Unless the new --ignore=wrongversion is specified, a dsc must
+  have the same version, and a .deb must have this source version
+  unless --ignore=wrongsourceversion is given. A .deb must also
+  contain a package listed in the Binary: header unless
+  --ignore=surprisingbinary is given. (A .dsc with an different name
+  or a .deb with an different Source than the Source-header if the
+  .changes file is still not ignoreable due to file naming issues)
+- FilterList in update and pull rules now has a space separated list
+  of filenames instead of only a single filename.
+- new Uploaders field in conf/distributions:
+  specifies what a .changes file has to be signed with to be allowed in
+- new helper program "changestool" to preprocess .changes files.
+
+Updates between 1.1.0 and 1.2.0:
+- improve message of missing files
+- checkin now support .tar.bz2, .diff.bz2 and .tar.bz2
+  (checkindsc did not care, binaries may contain tar.bz2 if reprepro
+   is compiled with libarchive and libbz2)
+- fix bug delaying full Contents- generation
+
+Updates between 1.0.2 and 1.1.0:
+- extended the (experimental) package tracking feature
+- cleartracks removes files losing their last reference (unless --keepunreferenced as usual)
+- fix bug of not generating a uncompressed Sources line in Release when no uncompressed
+  Sources file is generated.
+
+Updates between 1.0.1 and 1.0.2:
+- fix segfault in non-libarchive code introduced with 1.0.0
+
+Updates between 1.0.0 and 1.0.1:
+- add clearvanished command
+- cope with GNU ar style .deb files (when using libarchive)
+- cope with strange control.tar.gz files (when not using libarchive)
+
+Updates between 0.9.1 and 1.0.0:
+- reject some .changes earlier, delete added files
+  when checks after copying files to the pool failed.
+- handle some signals (TERM, ABRT, INT and QUIT) a bit
+  more gracefully
+- some little fixes in the documentation
+- add predelete action to delete packages that would be
+  deleted or replaced in an update
+- add new copy command to copy a single package from
+  one distribution to another.
+
+Updates between 0.9.0 and 0.9.1:
+- fix bug in post-export script handling.
+- fixed documentation in tiffany.example how to generate
+  .diff directories the new apt can read.
+
+Updates between 0.8.2 and 0.9.0:
+- added --export= option and harmonized exporting of
+  distributions. (Now every distribution processed
+  without errors is exported by default, with options
+  for always, never or only export it when changed)
+- added pull and checkpull actions.
+  Those are roughly equivalent to upgrade rules with
+  file:/path/to/basedir Method, but faster and a bit
+  more limited (files cannot change components)
+- fix segfault of checkupdate
+- fix including a changes file with source and restricting
+  to some binary distribution or to binary package type.
+- add support to use libarchive instead of calling ar and tar
+- added Contents file generation support
+- now supporting libdb-4.4, libdb-4.3 and libdb3
+
+Updates between 0.8.1 and 0.8.2:
+- mark process list files and only skip those not marked
+  as processed instead those not newly downloaded.
+- change the wording of some warnings, add some new
+- new WORKAROUND part in the manpage
+- add example bash_completion script
+
+Updates between 0.8 and 0.8.1:
+- some bugfixes (segfault, memmory leak, manpage typos)
+- enforcement of extensions of include{,dsc,deb,udeb} files
+  to .changes,.dsc,.deb,.udeb and new --ignore=extension to
+  circumvent it.
+- support generation of the NotAutomatic field.
+- added --ignore=missingfile to ignore files missing in 
+  a .changes file, but lying around and requested by
+  a .dsc file.
+
+Updates between 0.7 and 0.8:
+- unless the new --keepdirectories option is given,
+  try to remove pool/ directories that got empty by 
+  removing things from them. (To be exact, try to rmdir(2) 
+  them every time, which will only work if they are empty).
+- Unless the new --noskipold is used, only targets with newly 
+  downloaded index files are updated. (new = downloaded
+  by the instance of reprepro currently running)
+- reprepro now always puts the checksums of the uncompressed
+  index files into the Release file, even if it is not
+  written to disk. This fixes some problems with newer
+  versions of apt. (Take a look at DscIndices to get older
+  versions of reprepro to please them, too).
+- The export hooks (the programs specified as DebIndices,
+  UDebIndices and DscIndices) are now always called once
+  with the uncompressed names.
+- to compile reprepro with woody without a backported zlib
+  use the -DOLDZLIB switch.
+- reprepro now supports bzip2 output natively. (You can
+  still use the example if you want to call bzip2 yourself
+  instead of using the libbz2 library)
+- new db/release.cache.db file storing md5sums of written
+  index and Release files there. (This can cause Release
+  file give old md5sums when the files are not what it
+  expects, but unless you manually changed them that is
+  a good way to find errors, and manually changing if
+  fragile anyway, so better do not do it but ask me
+  if some feature is missing overrides cannot offer yet).
+
+Updates between 0.6 and 0.7:
+- new --ignore=missingfield,brokenold,brokenversioncmp, 
+	unusedarch,surpisingarch
+- Fix segfault when update file is empty.
+	  (Thanks to Gianluigi Tiesi for noticing this.)
+- improve manpage a little bit
+- many little tidy ups
+
+Updates between 0.5 and 0.6:
+- no longer set execute bit of generated Release.gpg files
+- use REPREPRO_BASE_DIR for default basedir, parse conf/options
+  for further default options. (and add --no options to disable
+  boolean options again, same for ignore)
+- new command createsymlinks (for symlinks like "stable"->"sarge")
+- parse FilterList default action correctly
+- putting .changes in a distribution not listed is now an error
+  without --ignore=wrongdistribution (and without
+  "ignore wrongdistributions" in conf/options)
+
+Updates between 0.4 and 0.5:
+- starts of source package tracking
+- add quick&dirty --ask-passphrase option
+- SignWith's argument is now used, use "yes" or "default" to get old behaviour
+- allow ~ in versions listed in .changes files
+
+Updates between 0.3 and 0.4:
+- minor bugfix: no longer readd existing packages, when after a delete rule
+  a old package was found first.
+- adopt short-howto to changes in keywords.
+- many tidy ups and little bugfixes
+- add Fallback option to specify another host to get mirrored files from
+- default basedir is now "." i.e. the current directory.
+
+Updates between 0.2 and 0.3:
+- Override: SourceOverride: replaced by (Deb|UDeb|Dsc)Override
+- new command reoverride to reapply override information.
+- sometimes be a bit more verbose
+- new experimental iteratedupdate command , which is a variant of
+  update but needs less memory.
+- to ignore Release signature failures two --force's are needed now.
+
+Updates between 0.1.1 and 0.2:
+- _md5sums command got removed. New command to dump
+  the contents of the files database is _listmd5sums
+- --basedir (alias -b) will no longer override prior
+  given values to --confdir, --listdir, ....
+- fix nasty overflow bug
+- write Release, Packages, and Sources files first
+  to .new variants and move then all at once.
+- new Options DebIndices DscIndices UDebIndices
