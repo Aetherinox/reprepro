@@ -1,0 +1,744 @@
+set -u
+. "$TESTSDIR"/test.inc
+
+mkdir test-1
+mkdir test-1/debian
+cat >test-1/debian/control <<END
+Source: test
+Section: interpreters
+Priority: required
+Maintainer: me <guess@who>
+Standards-Version: 0.0
+
+Package: sibling
+Architecture: any
+Description: bla
+ blub
+
+Package: siblingtoo
+Architecture: any
+Description: bla
+ blub
+
+Package: mytest
+Architecture: all
+Description: bla
+ blub
+END
+cat >test-1/debian/changelog <<END
+test (1-1) test; urgency=critical
+
+   * new upstream release (Closes: #allofthem)
+
+ -- me <guess@who>  Mon, 01 Jan 1980 01:02:02 +0000
+END
+mkdir -p test-1/debian/tmp/DEBIAN
+touch test-1/debian/tmp/best-file-in-the-root
+cd test-1
+DEB_HOST_ARCH="another" dpkg-gencontrol -psibling -v2
+DEB_HOST_ARCH="another" dpkg --build debian/tmp ..
+DEB_HOST_ARCH="another" dpkg-gencontrol -psiblingtoo -v3
+DEB_HOST_ARCH="another" dpkg --build debian/tmp ..
+DEB_HOST_ARCH="another" dpkg-gencontrol -pmytest -v2
+DEB_HOST_ARCH="another" dpkg --build debian/tmp ..
+DEB_HOST_ARCH="another" dpkg-genchanges -b > ../test-1.changes
+DEB_HOST_ARCH="somemore" dpkg-gencontrol -psiblingtoo -v3
+DEB_HOST_ARCH="somemore" dpkg --build debian/tmp ..
+cd ..
+rm -r test-1
+mkdir test-2
+mkdir test-2/debian
+cat >test-2/debian/control <<END
+Source: test
+Section: interpreters
+Priority: required
+Maintainer: me <guess@who>
+Standards-Version: 0.0
+
+Package: sibling
+Architecture: any
+Description: bla
+ blub
+
+Package: siblingalso
+Architecture: any
+Description: bla
+ blub
+
+Package: mytest
+Architecture: all
+Description: bla
+ blub
+END
+cat >test-2/debian/changelog <<END
+test (2-1) test; urgency=critical
+
+   * bla bla bla (Closes: #allofthem)
+
+ -- me <guess@who>  Mon, 01 Jan 1980 01:02:02 +0000
+test (1-1) test; urgency=critical
+
+   * new upstream release (Closes: #allofthem)
+
+ -- me <guess@who>  Mon, 01 Jan 1980 01:02:02 +0000
+END
+mkdir -p test-2/debian/tmp/DEBIAN
+touch test-2/debian/tmp/best-file-in-the-root
+cd test-2
+dpkg-gencontrol -psiblingalso -v3.1
+dpkg --build debian/tmp ..
+dpkg-gencontrol -pmytest -v2.4
+dpkg --build debian/tmp ..
+dpkg-gencontrol -psibling -v2.2
+dpkg --build debian/tmp ..
+dpkg-genchanges -b > ../test-2.changes
+rm debian/files
+DEB_HOST_ARCH="another" dpkg-gencontrol -psibling -v2.2
+DEB_HOST_ARCH="another" dpkg --build debian/tmp ..
+dpkg-genchanges -b > ../test-2a.changes
+cd ..
+rm -r test-2
+
+for tracking in false true ; do
+
+mkdir conf
+cat > conf/distributions <<EOF
+Codename: two
+Components: main bad
+Architectures: source abacus another somemore
+EOF
+
+echo "with tracking is $tracking"
+if $tracking ; then
+	echo "Tracking: minimal" >> conf/distributions
+	if test x"${REPREPROOPTIONS#*--verbosedb}" != x"$REPREPROOPTIONS" ; then
+		TRACKINGTESTOPTIONS="-D t=1"
+	else
+		TRACKINGTESTOPTIONS="-D t=0"
+	fi
+else
+	TRACKINGTESTOPTIONS="-D t=0"
+fi
+
+cat >> conf/distributions <<EOF
+
+Codename: test
+Components: main bad
+Architectures: source abacus another somemore
+EOF
+
+testrun - -b . -A another include test test-1.changes 3<<EOF
+stderr
+-v3*=Limiting 'mytest_2_all.deb' to architectures another as requested.
+stdout
+$(odb)
+-v2*=Created directory "./pool"
+-v2*=Created directory "./pool/main"
+-v2*=Created directory "./pool/main/t"
+-v2*=Created directory "./pool/main/t/test"
+$(ofa 'pool/main/t/test/mytest_2_all.deb')
+$(ofa 'pool/main/t/test/siblingtoo_3_another.deb')
+$(ofa 'pool/main/t/test/sibling_2_another.deb')
+$(opa 'mytest' 2 'test' 'main' 'another' 'deb')
+$(opa 'siblingtoo' 3 'test' 'main' 'another' 'deb')
+$(opa 'sibling' 2 'test' 'main' 'another' 'deb')
+-v0*=Exporting indices...
+-v2*=Created directory "./dists"
+-v2*=Created directory "./dists/test"
+-v2*=Created directory "./dists/test/main"
+-v2*=Created directory "./dists/test/main/binary-abacus"
+-v2*=Created directory "./dists/test/main/binary-another"
+-v2*=Created directory "./dists/test/main/binary-somemore"
+-v2*=Created directory "./dists/test/main/source"
+-v2*=Created directory "./dists/test/bad"
+-v2*=Created directory "./dists/test/bad/binary-abacus"
+-v2*=Created directory "./dists/test/bad/binary-another"
+-v2*=Created directory "./dists/test/bad/binary-somemore"
+-v2*=Created directory "./dists/test/bad/source"
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*=  creating './dists/test/main/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|another'...
+-v6*=  creating './dists/test/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*=  creating './dists/test/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|source'...
+-v6*=  creating './dists/test/main/source/Sources' (gzipped)
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*=  creating './dists/test/bad/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|bad|another'...
+-v6*=  creating './dists/test/bad/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*=  creating './dists/test/bad/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|bad|source'...
+-v6*=  creating './dists/test/bad/source/Sources' (gzipped)
+EOF
+
+testrun - -b . -A "abacus" include test test-2.changes 3<<EOF
+stderr
+-v3*=Limiting 'mytest_2.4_all.deb' to architectures abacus as requested.
+stdout
+$(ofa 'pool/main/t/test/mytest_2.4_all.deb')
+$(ofa 'pool/main/t/test/siblingalso_3.1_abacus.deb')
+$(ofa 'pool/main/t/test/sibling_2.2_abacus.deb')
+$(opa 'mytest' x 'test' 'main' 'abacus' 'deb')
+$(opa 'siblingalso' x 'test' 'main' 'abacus' 'deb')
+$(opa 'sibling' x 'test' 'main' 'abacus' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*=  replacing './dists/test/main/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|another'...
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+if $tracking ; then
+echo "Tracking: minimal" >> conf/distributions
+testrun - -b . retrack test 3<<EOF
+stdout
+*=Retracking test...
+#2 times:
+$(ota 'test' 'test')
+EOF
+fi
+
+testrun - -b . list test 3<<EOF
+stdout
+*=test|main|abacus: mytest 2.4
+*=test|main|abacus: sibling 2.2
+*=test|main|abacus: siblingalso 3.1
+*=test|main|another: mytest 2
+*=test|main|another: sibling 2
+*=test|main|another: siblingtoo 3
+EOF
+
+testrun - -b . flood test 3<<EOF
+stdout
+$(opa 'mytest' x 'test' 'main' 'somemore' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*=  replacing './dists/test/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+testrun - -b . list test 3<<EOF
+stdout
+*=test|main|abacus: mytest 2.4
+*=test|main|abacus: sibling 2.2
+*=test|main|abacus: siblingalso 3.1
+*=test|main|another: mytest 2
+*=test|main|another: sibling 2
+*=test|main|another: siblingtoo 3
+*=test|main|somemore: mytest 2.4
+EOF
+
+testrun - -b . -C main -A somemore includedeb test siblingtoo_3_somemore.deb 3<<EOF
+stdout
+$(ofa 'pool/main/t/test/siblingtoo_3_somemore.deb')
+$(opa 'siblingtoo' x 'test' 'main' 'somemore' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*=  replacing './dists/test/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+testrun empty -b . flood test
+
+testrun - -b . -A somemore remove test mytest 3<<EOF
+stdout
+$(opd 'mytest' unset test main somemore deb)
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*=  replacing './dists/test/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+testrun - -b . list test 3<<EOF
+stdout
+*=test|main|abacus: mytest 2.4
+*=test|main|abacus: sibling 2.2
+*=test|main|abacus: siblingalso 3.1
+*=test|main|another: mytest 2
+*=test|main|another: sibling 2
+*=test|main|another: siblingtoo 3
+*=test|main|somemore: siblingtoo 3
+EOF
+
+testrun - -b . flood test 3<<EOF
+stdout
+$(opa 'mytest' x 'test' 'main' 'somemore' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*=  replacing './dists/test/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+testrun - -b . list test 3<<EOF
+stdout
+*=test|main|abacus: mytest 2.4
+*=test|main|abacus: sibling 2.2
+*=test|main|abacus: siblingalso 3.1
+*=test|main|another: mytest 2
+*=test|main|another: sibling 2
+*=test|main|another: siblingtoo 3
+*=test|main|somemore: siblingtoo 3
+*=test|main|somemore: mytest 2
+EOF
+
+testrun - -b . -C main includedeb test sibling_2.2_another.deb 3<<EOF
+stdout
+$(ofa 'pool/main/t/test/sibling_2.2_another.deb')
+$(opu 'sibling' x x 'test' 'main' 'another' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*=  replacing './dists/test/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+-v0*=Deleting files no longer referenced...
+$(ofd 'pool/main/t/test/sibling_2_another.deb')
+EOF
+
+if $tracking ; then
+testout - -b . dumptracks test 3<<EOF
+EOF
+cat > results.expected <<EOF
+Distribution: test
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/mytest_2_all.deb a 2
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+ pool/main/t/test/siblingtoo_3_somemore.deb b 1
+
+Distribution: test
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 1
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+ pool/main/t/test/sibling_2.2_another.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+testrun - -b . flood test 3<<EOF
+stdout
+$(opu 'mytest' x x 'test' 'main' 'another' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'test|main|abacus'...
+-v6*= looking for changes in 'test|main|another'...
+-v6*=  replacing './dists/test/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'test|main|somemore'...
+-v6*= looking for changes in 'test|main|source'...
+-v6*= looking for changes in 'test|bad|abacus'...
+-v6*= looking for changes in 'test|bad|another'...
+-v6*= looking for changes in 'test|bad|somemore'...
+-v6*= looking for changes in 'test|bad|source'...
+EOF
+
+testrun - -b . list test 3<<EOF
+stdout
+*=test|main|abacus: mytest 2.4
+*=test|main|abacus: sibling 2.2
+*=test|main|abacus: siblingalso 3.1
+*=test|main|another: mytest 2.4
+*=test|main|another: sibling 2.2
+*=test|main|another: siblingtoo 3
+*=test|main|somemore: siblingtoo 3
+*=test|main|somemore: mytest 2
+EOF
+
+if $tracking ; then
+testout - -b . dumptracks test 3<<EOF
+EOF
+cat > results.expected <<EOF
+Distribution: test
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/mytest_2_all.deb a 1
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+ pool/main/t/test/siblingtoo_3_somemore.deb b 1
+
+Distribution: test
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 2
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+ pool/main/t/test/sibling_2.2_another.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+cat > conf/incoming << EOF
+Name: myrule
+Allow: test>two
+Options: limit_arch_all
+IncomingDir: i
+TempDir: tmp
+EOF
+
+ls *.changes
+mkdir i tmp
+cp test-1.changes sibling_2_another.deb siblingtoo_3_another.deb mytest_2_all.deb i/
+
+testrun - -b . processincoming myrule 3<<EOF
+stdout
+$(ofa 'pool/main/t/test/sibling_2_another.deb')
+$(opa 'mytest' x 'two' 'main' 'another' 'deb')
+$(opa 'siblingtoo' x 'two' 'main' 'another' 'deb')
+$(opa 'sibling' x 'two' 'main' 'another' 'deb')
+$(otta 'two' 'test')
+-v1*=deleting './i/mytest_2_all.deb'...
+-v1*=deleting './i/siblingtoo_3_another.deb'...
+-v1*=deleting './i/test-1.changes'...
+-v1*=deleting './i/sibling_2_another.deb'...
+-v0*=Exporting indices...
+-v2*=Created directory "./dists/two"
+-v2*=Created directory "./dists/two/main"
+-v2*=Created directory "./dists/two/main/binary-abacus"
+-v2*=Created directory "./dists/two/main/binary-another"
+-v2*=Created directory "./dists/two/main/binary-somemore"
+-v2*=Created directory "./dists/two/main/source"
+-v2*=Created directory "./dists/two/bad"
+-v2*=Created directory "./dists/two/bad/binary-abacus"
+-v2*=Created directory "./dists/two/bad/binary-another"
+-v2*=Created directory "./dists/two/bad/binary-somemore"
+-v2*=Created directory "./dists/two/bad/source"
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*=  creating './dists/two/main/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|another'...
+-v6*=  creating './dists/two/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*=  creating './dists/two/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|source'...
+-v6*=  creating './dists/two/main/source/Sources' (gzipped)
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*=  creating './dists/two/bad/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|bad|another'...
+-v6*=  creating './dists/two/bad/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*=  creating './dists/two/bad/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|bad|source'...
+-v6*=  creating './dists/two/bad/source/Sources' (gzipped)
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|another: mytest 2
+*=two|main|another: sibling 2
+*=two|main|another: siblingtoo 3
+EOF
+
+if $tracking ; then
+testrun - -b . dumptracks two 3<<EOF
+stdout
+*=Distribution: two
+*=Source: test
+*=Version: 1-1
+*=Files:
+*= pool/main/t/test/sibling_2_another.deb b 1
+*= pool/main/t/test/siblingtoo_3_another.deb b 1
+*= pool/main/t/test/mytest_2_all.deb a 1
+*=
+EOF
+fi
+
+testrun - -b . flood two 3<<EOF
+stdout
+$(opa 'mytest' x 'two' 'main' 'somemore' 'deb')
+$(opa 'mytest' x 'two' 'main' 'abacus' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*=  replacing './dists/two/main/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|another'...
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*=  replacing './dists/two/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|source'...
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*= looking for changes in 'two|bad|another'...
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*= looking for changes in 'two|bad|source'...
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|abacus: mytest 2
+*=two|main|another: mytest 2
+*=two|main|another: sibling 2
+*=two|main|another: siblingtoo 3
+*=two|main|somemore: mytest 2
+EOF
+
+if $tracking ; then
+testrun - -b . dumptracks two 3<<EOF
+stdout
+*=Distribution: two
+*=Source: test
+*=Version: 1-1
+*=Files:
+*= pool/main/t/test/sibling_2_another.deb b 1
+*= pool/main/t/test/siblingtoo_3_another.deb b 1
+*= pool/main/t/test/mytest_2_all.deb a 3
+*=
+EOF
+fi
+
+dodo rmdir i
+mkdir i
+
+cp test-2.changes siblingalso_3.1_abacus.deb mytest_2.4_all.deb sibling_2.2_abacus.deb  i/
+
+testrun - -b . processincoming myrule 3<<EOF
+stdout
+$(opu 'mytest' x x 'two' 'main' 'abacus' 'deb')
+$(opa 'siblingalso' x 'two' 'main' 'abacus' 'deb')
+$(opa 'sibling' x 'two' 'main' 'abacus' 'deb')
+$(otta 'two' 'test')
+-v1*=deleting './i/mytest_2.4_all.deb'...
+-v1*=deleting './i/siblingalso_3.1_abacus.deb'...
+-v1*=deleting './i/sibling_2.2_abacus.deb'...
+-v1*=deleting './i/test-2.changes'...
+-v0*=Exporting indices...
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*=  replacing './dists/two/main/binary-abacus/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|another'...
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*= looking for changes in 'two|main|source'...
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*= looking for changes in 'two|bad|another'...
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*= looking for changes in 'two|bad|source'...
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|abacus: mytest 2.4
+*=two|main|abacus: sibling 2.2
+*=two|main|abacus: siblingalso 3.1
+*=two|main|another: mytest 2
+*=two|main|another: sibling 2
+*=two|main|another: siblingtoo 3
+*=two|main|somemore: mytest 2
+EOF
+
+if $tracking ; then
+testout "" -b . dumptracks two
+cat > results.expected <<EOF
+Distribution: two
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/mytest_2_all.deb a 2
+ pool/main/t/test/sibling_2_another.deb b 1
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+
+Distribution: two
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 1
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+testrun - -b . flood two 3<<EOF
+stdout
+$(opu 'mytest' x x 'two' 'main' 'somemore' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*= looking for changes in 'two|main|another'...
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*=  replacing './dists/two/main/binary-somemore/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|source'...
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*= looking for changes in 'two|bad|another'...
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*= looking for changes in 'two|bad|source'...
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|abacus: mytest 2.4
+*=two|main|abacus: sibling 2.2
+*=two|main|abacus: siblingalso 3.1
+*=two|main|another: mytest 2
+*=two|main|another: sibling 2
+*=two|main|another: siblingtoo 3
+*=two|main|somemore: mytest 2.4
+EOF
+
+if $tracking ; then
+testout "" -b . dumptracks two
+cat > results.expected <<EOF
+Distribution: two
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/mytest_2_all.deb a 1
+ pool/main/t/test/sibling_2_another.deb b 1
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+
+Distribution: two
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 2
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+dodo rmdir i
+mkdir i
+cp test-2a.changes sibling_2.2_another.deb i/
+
+testrun - -b . processincoming myrule 3<<EOF
+stdout
+$(opu 'sibling' x x 'two' 'main' 'another' 'deb')
+-v1*=deleting './i/sibling_2.2_another.deb'...
+-v1*=deleting './i/test-2a.changes'...
+-v0*=Exporting indices...
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*= looking for changes in 'two|main|another'...
+-v6*=  replacing './dists/two/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*= looking for changes in 'two|main|source'...
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*= looking for changes in 'two|bad|another'...
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*= looking for changes in 'two|bad|source'...
+-v0*=Deleting files no longer referenced...
+$(ofd 'pool/main/t/test/sibling_2_another.deb')
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|abacus: mytest 2.4
+*=two|main|abacus: sibling 2.2
+*=two|main|abacus: siblingalso 3.1
+*=two|main|another: mytest 2
+*=two|main|another: sibling 2.2
+*=two|main|another: siblingtoo 3
+*=two|main|somemore: mytest 2.4
+EOF
+
+if $tracking ; then
+testout "" -b . dumptracks two
+cat > results.expected <<EOF
+Distribution: two
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/mytest_2_all.deb a 1
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+
+Distribution: two
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 2
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+ pool/main/t/test/sibling_2.2_another.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+testrun - -b . flood two 3<<EOF
+stdout
+$(opu 'mytest' x x 'two' 'main' 'another' 'deb')
+-v0*=Exporting indices...
+-v6*= looking for changes in 'two|main|abacus'...
+-v6*= looking for changes in 'two|main|another'...
+-v6*=  replacing './dists/two/main/binary-another/Packages' (uncompressed,gzipped)
+-v6*= looking for changes in 'two|main|somemore'...
+-v6*= looking for changes in 'two|main|source'...
+-v6*= looking for changes in 'two|bad|abacus'...
+-v6*= looking for changes in 'two|bad|another'...
+-v6*= looking for changes in 'two|bad|somemore'...
+-v6*= looking for changes in 'two|bad|source'...
+EOF
+
+testrun - -b . list two 3<<EOF
+stdout
+*=two|main|abacus: mytest 2.4
+*=two|main|abacus: sibling 2.2
+*=two|main|abacus: siblingalso 3.1
+*=two|main|another: mytest 2.4
+*=two|main|another: sibling 2.2
+*=two|main|another: siblingtoo 3
+*=two|main|somemore: mytest 2.4
+EOF
+
+if $tracking ; then
+testout "" -b . dumptracks two
+cat > results.expected <<EOF
+Distribution: two
+Source: test
+Version: 1-1
+Files:
+ pool/main/t/test/siblingtoo_3_another.deb b 1
+
+Distribution: two
+Source: test
+Version: 2-1
+Files:
+ pool/main/t/test/mytest_2.4_all.deb a 3
+ pool/main/t/test/sibling_2.2_abacus.deb b 1
+ pool/main/t/test/siblingalso_3.1_abacus.deb b 1
+ pool/main/t/test/sibling_2.2_another.deb b 1
+
+EOF
+dodiff results.expected results
+fi
+
+rm -r conf dists pool db
+dodo rmdir i tmp
+done
+
+rm *.deb *.changes results results.expected
+testsuccess

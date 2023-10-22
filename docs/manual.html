@@ -1,0 +1,1497 @@
+<html><head>
+<title>reprepro manual</title>
+<!-- some style elements stolen from or inspired by bugs.debian.org /-->
+<style>
+<!--
+html { color: #000; background: #fefefe; font-family: serif; margin: 1em; border: 0; padding: 0; line-height: 120%; }
+body { margin: 0; border: 0; padding: 0; }
+pre { text-align: left; border: #f0f0f0 1px solid;  padding: 1px;}
+pre.shell { text-align: left; border: none; border-left: #f0f0f0 1px solid;  padding: 2px;}
+h1, h2, h3 { text-align: left; font-family: sans-serif; background-color: #f0f0ff; color: #3c3c3c; border: #a7a7a7 1px solid;  padding: 10px;}
+h1 { font-size: 180%; line-height: 150%; }
+h2 { font-size: 150% }
+h3 { font-size: 100% }
+ul.dir { list-style-type: disc; }
+ul { list-style-type: square; }
+dt.dir, dt.file, dt.symlink { font-weight:bold; font-family: sans-serif; }
+/-->
+</style>
+</head>
+<body>
+<h1>reprepro manual</h1>
+This manual documents reprepro, a tool to generate and administer
+Debian package repositories.
+<br>
+Other useful resources:
+<ul>
+<li> the <a href="http://mirrorer.alioth.debian.org/">homepage</a> of  reprepro.</li>
+<li> <a href="file://localhost/usr/share/doc/reprepro/">local directory</a> with documentation and examples, if you have reprepro installed.</li>
+<li> the <a href="http://git.debian.org/?p=mirrorer/reprepro.git;a=blob_plain;f=docs/FAQ;hb=HEAD">Frequently Asked Questions</a></li>
+</ul>
+<h2>Table of contents</h2>
+Sections of this document:
+<ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#firststeps">First steps</a></li>
+<li><a href="#dirbasics">Repository basics</a></li>
+<li><a href="#config">Config files</a></li>
+<li><a href="#export">Generation of index files</a>
+ <ul>
+ <li><a href="#compression">Compression and file names</a></li>
+ <li><a href="#signing">Signing</a></li>
+ <li><a href="#contents">Contents files</a></li>
+ <li><a href="#exporthook">Additional index files (like .diff)</a></li>
+ </ul></li>
+<li><a href="#localpackages">Local packages</a>
+ <ul>
+ <li><a href="#include">Including via command line</a></li>
+ <li><a href="#incoming">Processing an incoming queue</a></li>
+ </ul></li>
+<li><a href="#mirroring">Mirroring</a></li>
+<li><a href="#propagation">Propagation of packages</a></li>
+<li><a href="#snapshosts">Snapshots</a> (TODO)</li>
+<li><a href="#tracking">Source package tracking</a> (TODO)</li>
+<li><a href="#hooks">Extending reprepro / Hooks and more</a></li>
+<li><a href="#maintenance">Maintenance</a></li>
+<li><a href="#internals">Internals</a></li>
+<li><a href="#recovery">Disaster recovery</a></li>
+<li><a href="#paranoia">Paranoia</a></li>
+<li><a href="#counterindications">What reprepro cannot do</a></li>
+</ul>
+<h2><a name="introduction">Introduction</a></h2>
+<h3>What reprepro does</h3>
+Reprepro is a tool to take care of a repository of Debian packages
+(<tt>.dsc</tt>,<tt>.deb</tt> and <tt>.udeb</tt>).
+It installs them to the proper places, generates indices of packages
+(<tt>Packages</tt> and <tt>Sources</tt> and their compressed variants)
+and of index files (<tt>Release</tt> and optionally <tt>Release.gpg</tt>),
+so tools like <tt>apt</tt> know what is available and where to get it from.
+It will keep track which file belongs to where and remove files no longer
+needed (unless told to not do so).
+It can also make (partial) partial mirrors of remote repositories,
+including merging multiple sources and
+automatically (if explicitly requested) removing packages no longer available
+in the source.
+And many other things (sometimes I fear it got a few features too much).
+<h3>What reprepro needs</h3>
+It needs some libraries (<tt>zlib</tt>, <tt>libgpgme</tt>, <tt>libdb</tt> (Version 3, 4.3 or 4.4)) and can be compiled with some more for additional features (<tt>libarchive</tt>,
+<tt>libbz2</tt>).
+Otherwise it only needs
+<tt>apt</tt>'s methods (only when downloading stuff),
+<tt>gpg</tt> (only when signing or checking signatures),
+and if compiled without <tt>libarchive</tt> it needs <tt>tar</tt> and <tt>ar</tt> installed.
+<br>
+If you tell reprepro to call scripts for you, you will of course need the interpreters for these scripts:
+The included example to generate pdiff files needs python. The example to extract
+changelogs needs dpkg-source.
+<h3>What this manual aims to do</h3>
+This manual aims to give some overview over the most important features,
+so people can use them and so that I do not implement something a second
+time because I forgot support is already there.
+For a full reference of all possible commands and config options take a
+look at the man page, as this manual might miss some of the more obscure
+options.
+<h2><a name="firststeps">First steps</a></h2>
+<h3>generate a repository with local packages</h3>
+<ul>
+<li>Choose a directory (or create it).</li>
+<li>Create a subdirectory called <tt>conf</tt> in there.</li>
+<li>In the <tt>conf/</tt> subdirectory create a file called <tt>distributions</tt>,
+with content like:
+<pre class="file">
+Codename: mystuff
+Components: main bad
+Architectures: sparc i386 source
+</pre>
+or with content like:
+<pre class="file">
+Codename: andy
+Suite: rusty
+Components: main bad
+Architectures: sparc i386 source
+Origin: myorg
+Version: 20.3
+Description: my first little repository
+</pre>
+(Multiple distributions are separated by empty lines, Origin, Version and Description
+are just copied to the generated Release files, more things controlling reprepro can
+appear which are described later).
+</li>
+<li>If your <tt>conf/distributions</tt> file contained a <tt>Suite:</tt> and you
+are too lazy to generate the symbolic links yourself, call:
+<pre class="shell">
+reprepro -b $YOURBASEDIR createsymlinks
+</pre>
+</li>
+<li>Include some package, like:
+<pre class="shell">
+reprepro -b $YOURBASEDIR include mystuff mypackage.changes
+</pre>
+or:
+<pre class="shell">
+reprepro -b $YOURBASEDIR includedeb mystuff mypackage.deb
+</pre>
+</li>
+<li>Take a look at the generated <tt>pool</tt> and <tt>dists</tt>
+directories. They contain everything needed to apt-get from.
+Tell apt to include it by adding the following to your <tt>sources.list</tt>:
+<pre class="file">
+deb file:///$YOURBASEDIR mystuff main bad
+</pre>
+or make it available via http or ftp and do the same <tt>http://</tt> or <tt>ftp://</tt> source.</li>
+</ul>
+<h3>mirroring packages from other repositories</h3>
+This example shows how to generate a mirror of a single architecture with
+all packages of etch plus security updates:
+<ul>
+<li>Choose a directory (or create it).</li>
+<li>Create a subdirectory called <tt>conf</tt> in there (if not already existent).</li>
+<li>In the <tt>conf/</tt> subdirectory create a file called <tt>distributions</tt>,
+with content like (or add to that file after an empty line):
+<pre class="file">
+Origin: Debian
+Label: Debian
+Suite: stable
+Version: 4.0
+Codename: etch
+Architectures: i386
+Components: main
+Description: Debian 4.0 etch + security updates
+Update: - debian security
+Log: logfile
+</pre>
+Actually only <tt>Codename</tt>, <tt>Components</tt>, <tt>Architecture</tt> and <tt>Update</tt> is needed, the rest is just information for clients.
+The <tt>Update</tt> line tells to delete everything no longer available (<tt>-</tt>),
+then add the <tt>debian</tt> and <tt>security</tt> rules, which still have to be defined:
+</li>
+<li>In the <tt>conf/</tt> subdirectory create a file called <tt>updates</tt>,
+with content like (or add to that file after an empty line:):
+or with content like:
+<pre class="file">
+Name: security
+Method: http://security.debian.org/debian-security
+Fallback: ftp://klecker.debian.org/debian-security
+Suite: */updates
+VerifyRelease: A70DAF536070D3A1|B5D0C804ADB11277
+Architectures: i386
+Components: main
+UDebComponents:
+
+Name: debian
+Method: http://ftp2.de.debian.org/debian
+Config: Acquire::Http::Proxy=http://proxy.myorg.de:8080
+VerifyRelease: A70DAF536070D3A1|B5D0C804ADB11277
+</pre>
+(If there are no Architecture, Components or UDebComponents, it will try all the distribution to update has. Fallback means a URL to try when the first cannot offer some file (Has to be the same method)).
+</li>
+<li>Tell reprepro to update:
+<pre class="shell">
+reprepro -b $YOURBASEDIR update etch
+</pre>
+</li>
+<li>Take a look at the generated <tt>pool</tt> and <tt>dists</tt>
+directories. They contain everything needed to apt-get from.
+Tell apt to include it by adding the following to your <tt>sources.list</tt>:
+<pre class="shell">
+deb file:///$YOURBASEDIR etch main
+</pre>
+or make it available via http or ftp.</li>
+</ul>
+<h2><a name="dirbasics">Repository basics</a></h2>
+An <tt>apt-get</tt>able repository of Debian packages consists of two parts:
+the index files describing what is available and where it is and the actual
+Debian binary (<tt class="suffix">.deb</tt>),
+installer binary (<tt class="suffix">.udeb</tt>),
+and source (<tt class="suffix">.dsc</tt> together with
+<tt class="suffix">.tar.gz</tt> or
+<tt class="suffix">.orig.tar.gz</tt> and
+<tt class="suffix">.diff.gz</tt>) packages.
+<br>
+While you do not know how these look like to use reprepro, it's always a good
+idea to know what you are creating.
+<h3>Index files</h3>
+All index files are in subdirectories of a directory called
+<tt class="dirname">dists</tt>. Apt is very decided what names those should
+have, including the name of <tt class="dirname">dists</tt>.
+Including all optional and extensional files, the hierarchy looks like this:
+
+<dl class="dir">
+<dt class="dir">dists</dt><dd>
+	<dl class="dir">
+	<dt class="dir">CODENAME</dt><dd>
+Each distribution has it's own subdirectory here, named by it's codename.
+		<dl class="dir">
+		<dt class="file">Release</dt><dd>
+This file describes what distribution this is and the checksums of
+all index files included.
+		</dd>
+		<dt class="file">Release.gpg</dt><dd>
+This is the optional detached gpg signature of the Release file.
+Take a look at the <a name="#signing">section about signing</a> for how to
+active this.
+		</dd>
+		<dt class="file">Contents-ARCHITECTURE.gz</dt><dd>
+This optional file lists all files and which packages they belong to.
+It's downloaded and used by tools like
+<a href="http://packages.debian.org/apt-file">apt-file</a>
+to allow users to determine which package to install to get a specific file.
+<br>
+To activate generating of these files by reprepro, you need a <a href="#contents">Contents</a>
+header in your distribution declaration.
+		</dd>
+		<dt class="dir">COMPONENT1</dt><dd>
+Each component has it's own subdirectory here. They can be named whatever users
+can be bothered to write into their <tt class="filename">sources.list</tt>, but
+things like <tt>main</tt>, <tt>non-free</tt> and <tt>contrib</tt> are common.
+But funny names like <tt>bad</tt> or <tt>universe</tt> are just as possible.
+			<dl class="dir">
+			<dt class="dir">source</dt><dd>
+If this distribution supports sources, this directory lists which source
+packages are available in this component.
+				<dl class="dir">
+				<dt class="file">Release</dt><dd>
+This file contains a copy of those information about the distribution
+applicable to this directory.
+				</dd>
+				<dt class="file">Sources</dt>
+				<dt class="file">Sources.gz</dt>
+				<dt class="file">Sources.bz2</dt><dd>
+These files contain the actual description of the source Packages. By default
+only the <tt class="suffix">.gz</tt> file created, to create all three add the
+following to the declarations of the distributions:
+<pre class="config">
+DscIndices Sources Release . .gz .bz2
+</pre>
+That header can also be used to name those files differently, but then apt
+will no longer find them...
+				</dd>
+				<dt class="dir">Sources.diff</dt><dd>
+This optional directory contains diffs, so that only parts of the index
+file must be downloaded if it changed. While reprepro cannot generate these
+so-called <tt>pdiff</tt>s itself, it ships both with a program called rredtool
+and with an example python script to generate those.
+				</dd>
+				</dl>
+			</dd>
+			</dl>
+			<dl class="dir">
+			<dt class="dir">binary-ARCHITECTURE</dt><dd>
+Each architecture has its own directory in each component.
+				<dl class="dir">
+				<dt class="file">Release</dt><dd>
+This file contains a copy of those information about the distribution
+applicable to this directory.
+				</dd>
+				<dt class="file">Packages</dt>
+				<dt class="file">Packages.gz</dt>
+				<dt class="file">Packages.bz2</dt><dd>
+These files contain the actual description of the binary Packages. By default
+only the uncompressed and <tt class="suffix">.gz</tt> files are created.
+To create all three, add the following to the declarations of the distributions:
+<pre class="config">
+DebIndices Packages Release . .gz .bz2
+</pre>
+That header can also be used to name those files differently, but then apt
+will no longer find them...
+				</dd>
+				<dt class="dir">Packages.diff</dt><dd>
+This optional directory contains diffs, so that only parts of the index
+file must be downloaded if it changed. While reprepro cannot generate these
+so-called <tt>pdiff</tt>s itself, it ships both with a program called rredtool
+and with an example python script to generate those.
+				</dd>
+				</dl>
+			</dd>
+			<dt class="dir">debian-installer</dt><dd>
+This directory contains information about the <tt class="suffix">.udeb</tt>
+modules for the <a href="http://www.debian.org/devel/debian-installer/">Debian-Installer</a>.
+Those are actually just a very stripped down form of normal <tt class="suffix">.deb</tt>
+packages and this the hierarchy looks very similar:
+
+				<dl class="dir">
+				<dt class="dir">binary-ARCHITECTURE</dt><dd>
+					<dl class="dir">
+					<dt class="file">Packages</dt><dd></dd>
+					<dt class="file">Packages.gz</dt><dd></dd>
+					</dl>
+				</dd>
+				</dl>
+			</dd>
+			</dl>
+		</dd>
+		<dt class="dir">COMPONENT2</dt><dd>
+There is one dir for every component. All look just the same.
+		</dd>
+		</dl>
+	</dd>
+	<dt class="symlink">SUITE -> CODENAME</dt><dd>
+To allow accessing distribution by function instead of by name, there are often
+symbolic links from suite to codenames. That way users can write
+<pre class="config">
+deb http://some.domain.tld/debian SUITE COMPONENT1 COMPONENT2
+</pre>
+instead of
+<pre class="config">
+deb http://some.domain.tld/debian CODENAME COMPONENT1 COMPONENT2
+</pre>
+in their <tt class="filename">/etc/apt/sources.list</tt> and totally get
+surprised by getting something new after a release.
+	</dd>
+	</dl>
+</dd></dl>
+<h3>Package pool</h3>
+While the index files have a required filename, the actual files
+are given just as relative path to the base directory you specify
+in your sources list. That means apt can get them no matter what
+scheme is used to place them. The classical way Debian used till
+woody was to just put them in subdirectories of the
+<tt class="dir">binary-ARCHITECTURE</tt> directories, with the exception
+of the architecture-independent packages, which were put into a
+artificial <tt class="dir">binary-all</tt> directory. This was replaced
+for the official repository with package pools, which reprepro also uses.
+(Actually reprepro stores everything in pool a bit longer than the official
+repositories, that's why it recalculates all filenames without exception).
+<br>
+In a package pool, all package files of all distributions in that repository
+are stored in a common directory hierarchy starting with <tt class="dir">pool/</tt>,
+only separated by the component they belong to and the source package name.
+As everything this has disadvantages and advantages:
+<ul><li>disadvantages
+	<ul><li>different files in different distributions must have different filenames
+	</li><li>it's impossible to determine which distribution a file belongs to by path and filename (think mirroring)
+	</li><li>packages can no longer be grouped together in common subdirectories by having similar functions
+	</li></ul>
+</li><li>advantages
+	<ul><li>the extremely confusing situation of having differently build packages with the same version if different distributions gets impossible by design.
+	</li><li>the source (well, if it exists) is in the same directory as the binaries generated from it
+	</li><li>same files in different distributions need disk-space and bandwidth only once
+	</li><li>each package can be found only knowing component and sourcename
+	</li></ul>
+</li></ul>
+Now let's look at the actual structure of a pool (there is currently no difference
+between the pool structure of official Debian repositories and those generated by
+reprepro):
+
+<dl class="dir">
+<dt class="dir">pool</dt><dd>
+	The directory all this resides in is normally called <tt class="dir">pool</tt>.
+	That's nowhere hard coded in apt but that only looks at the relative
+	directory names in the index files. But there is also no reason to name
+	it differently.
+	<dl class="dir">
+	<dt class="dir">COMPONENT1</dt><dd>
+Each component has it's own subdirectory here.
+They can be named whatever users
+can be bothered to write into their <tt class="filename">sources.list</tt>, but
+things like <tt>main</tt>, <tt>non-free</tt> and <tt>contrib</tt> are common.
+But funny names like <tt>bad</tt> or <tt>universe</tt> are just as possible.
+		<dl class="dir">
+		<dt class="dir">a</dt><dd>
+As there are really many different source packages,
+the directory would be too full when all put here.
+So they are separated in different directories.
+Source packages starting with <tt class="constant">lib</tt> are put into a
+directory named after the first four letters of the source name.
+Everything else is put in a directory having the first letter as name.
+			<dl class="dir">
+			<dt class="dir">asource</dt><dd>
+Then the source package name follows.
+So this directory <tt class="dir">pool/COMPONENT1/a/asource/</tt> would contain
+all files of different versions of the hypothetical package <tt class="constant">asource</tt>.
+				<dl class="dir">
+				<dt class="dir">asource</dt><dd>
+				<dt class="file">a-source_version.dsc</dt>
+				<dt>a-source_version.tar.gz</dt><dd>
+The actual source package consists of its description file (<tt class="suffix">.dsc</tt>)
+and the files references by that.
+				</dd>
+				<dt class="file">binary_version_ARCH1deb</dt>
+				<dt class="file">binary_version_ARCH2.deb</dt>
+				<dt class="file">binary2_version_all.deb</dt><dd>
+				<dt class="file">di-module_version_ARCH1.udeb</dt><dd>
+Binary packages are stored here to.
+So to know where a binary package is stored you need to know what its source package
+name is.
+				</dd>
+				</dl>
+			</dd>
+			</dl>
+		</dd>
+		<dt class="dir">liba</dt><dd>
+As described before packages starting with <tt class="constant">lib</tt> are not stored
+in <tt class="dir">l</tt> but get a bit more context.
+		</dd>
+		</dl>
+	</dd>
+	<dt class="dir">COMPONENT2</dt><dd>
+There is one dir for every component. All look just the same.
+	</dd>
+	</dl>
+</dd></dl>
+As said before, you don't need to know this hierarchy in normal operation.
+reprepro will put everything to where it belong, keep account what is there
+and needed by what distribution or snapshot, and delete files no longer needed.
+(Unless told otherwise or when you are using the low-level commands).
+<h2><a name="config">Config files</a></h2>
+Configuring a reprepro repository is done by writing some config files
+into a directory.
+This directory is currently the <tt class="dir">conf</tt> subdirectory of the
+base directory of the repository,
+unless you specify <tt class="option">--confdir</tt> or set the
+environment variable <tt class="env">REPREPRO_CONFIG_DIR</tt>.
+
+<dl class="dir">
+<dt class="dir">options</dt><dd>
+If this file exists, reprepro will consider each line an additional
+command line option.
+Arguments must be in the same line after an equal sign.
+
+Options specified on the command line take precedence.
+</dd>
+<dt class="dir">distributions</dt><dd>
+This is the main configuration file and the only that is needed in all
+cases.
+It lists the distributions this repository contains and their properties.
+<br>
+See <a href="#firststeps">First steps</a> for a short example or the manpage
+for a list of all possible fields.
+</dd>
+<dt class="dir">updates</dt><dd>
+Rules about where to download packages from other repositories.
+See the section <a href="#mirroring">Mirroring / Updating</a>
+for more examples or the man page for a full reference.
+</dd>
+<dt class="dir">pulls</dt><dd>
+Rules about how to move packages in bulk between distributions
+where to download packages from other repositories.
+See the section <a href="#propagation">Propagation of packages</a>
+for an example or the man page for full reference.
+</dd>
+<dt class="dir">incoming</dt><dd>
+Rules for incoming queues as processed by <tt class="command">processincoming</tt>.
+See <a href="#processincoming-incoming-config">Processing an incoming queue</a> for more information.
+</dd>
+</dl>
+<h2><a name="export">Generation of index files</a></h2>
+<h3>Deciding when to generate</h3>
+As reprepro stores all state in its database,
+you can decide when you want them to be written to the <tt class="dir">dists/</tt>
+directory.
+You can always tell reprepro to generate those files with the <tt>export</tt> command:
+<pre class="command">
+reprepro -b $YOURBASEDIR export $CODENAMES
+</pre>
+This can be especially useful, if you just edited <tt class="file">conf/distributions</tt>
+and want to test what it generates.
+<p>
+While that command regenerates all files, in normal operation reprepro will only
+regenerate files where something just changed or that are missing.
+With <tt class="option">--export</tt> option you can control when this fill happen:
+<dl><dt>never</dt><dd>Don't touch any index files.
+This can be useful for doing multiple operations in a row and not wanting to regenerate
+the indices all the time.
+Note that unless you do an explicit export or change the same parts later without that
+option, the generated index files may be permanently out of date.
+</dd><dt>silent-never</dt><dd>Like never, but be more silent about it.
+</dd><dt>changed</dt><dd>This is the default behaviour since 3.0.1.
+Only export distributions where something changed
+(and no error occurred that makes an inconsistent state likely).
+And in those distributions only (re-)generate files which content should have been changed
+by the current action or which are missing.
+</dd><dt>lookedat</dt><dd>New name for <tt>normal</tt> since 3.0.1.
+</dd><dt>normal</dt><dd>This was the default behaviour until 3.0.0 (changed in 3.0.1).
+In this mode all distributions are processed that were looked at without error
+(where error means only errors happening while the package was open so have a chance
+to cause strange contents).
+This ensures that even after a operation that had nothing to do the looked at
+distribution has all the files exported needed to access it. (But still only files
+missing or that content would change with this action are regenerated).
+</dd><dt>force</dt><dd>Also try to write the current state if some error occurred.
+In all other modes reprepro will not write the index files if there was a problem.
+While this keeps the repository usable for users, it means that you will need an
+explicit export to write possible other changes done before that in the same run.
+(reprepro will tell you that at the end of the run with error, but you should not
+miss it).
+</dd></dl>
+<h3>Distribution specific fields</h3>
+There are a lot of <tt class="file">conf/distributions</tt> headers to control
+what index files to generate for some distribution, how to name
+them, how to postprocess them and so on. The most important are:
+<h4>Fields for the Release files</h4>
+The following headers are copied verbatim to the Release file, if they exist:
+<tt class="header">Origin</tt>,
+<tt class="header">Label</tt>,
+<tt class="header">Codename</tt>,
+<tt class="header">Suite</tt>,
+<tt class="header">Architectures</tt> (excluding a possible value "<tt>source</tt>"),
+<tt class="header">Components</tt>,
+<tt class="header">Description</tt>, and
+<tt class="header">NotAutomatic</tt>,
+<tt class="header">ButAutomaticUpgrades</tt>.
+<h4><a name="compression">Choosing compression and file names</a></h4>
+Depending on the type of the index files, different files are generated.
+No specifying anything is equivalent to:
+<pre class="config">
+ DscIndices Sources Release .gz
+ DebIndices Packages Release . .gz
+ UDebIndices Packages . .gz
+</pre>
+This means to generate <tt>Release</tt>, <tt>Sources.gz</tt> for sources,
+<tt>Release</tt>, <tt>Packages</tt> and <tt>Packages.gz</tt> for binaries
+and <tt>Packages</tt> and <tt>Packages.gz</tt> for installer modules.
+<br>
+The format of these headers is the name of index file to generate, followed
+by the optional name for a per-directory release description
+(when no name is specified, no file is generated).
+Then a list of compressions:
+A single dot (<tt>.</tt>) means generating an uncompressed index,
+<tt>.gz</tt> means generating a gzipped output,
+while <tt>.bz2</tt> requests and bzip2ed file.
+(<tt>.bz2</tt> is not available when disabled at compile time).
+After the compressions a script can be given that is called to generate/update
+additional forms, see <a href="#exporthook">&quot;Additional index files&quot;</a>.
+<h4><a name="signing">Signing</a></h4>
+If there is a <tt class="config">SignWith</tt> header, reprepro will try
+to generate a <tt class="file">Release.gpg</tt> file using libgpgme.
+If the value of the header is <tt>yes</tt> it will use the first key
+it finds, otherwise it will give the option to libgpgme to determine the
+key. (Which means fingerprints and keyids work fine, and whatever libgpgme
+supports, which might include most that gpg supports to select a key).
+<br>
+The best way to deal with keys needing passphrases is to use
+<a href="http://packages.debian.org/gnupg-agent">gpg-agent</a>.
+The only way to specify which keyring to use is to set the
+<tt class="env">GNUPGHOME</tt> environment variable, which will effect all
+distributions.
+<h4><a name="contents">Contents files</a></h4>
+Reprepro can generate files called
+<tt class="file">dists/CODENAME/Contents-ARCHITECTURE.gz</tt>
+listing all files in all binary packages available for the selected
+architecture in that distribution and which package they belong to.
+<br>
+This file can either be used by humans directly or via downloaded
+and searched with tools like
+<a href="http://packages.debian.org/apt-file">apt-file</a>.
+<br>
+To activate generating of these files by reprepro, you need a <tt class="config">Contents</tt> header in that distribution's declaration in <tt class="file">conf/distributions</tt>,
+like:
+<pre class="config">
+Contents:
+</pre>
+Versions before 3.0.0 need a ratio number there, like:
+<pre class="config">
+Contents: 1
+</pre>
+The number is the inverse ratio of not yet looked at and cached files to process in
+every run. The larger the more packages are missing. 1 means to list everything.
+<br>
+The arguments of the Contents field and other fields control
+which Architectures to generate Contents files for and which
+Components to include in those. For example
+<pre class="config">
+Contents: udebs nodebs . .gz .bz2
+ContentsArchitectures: ia64
+ContentsComponents:
+ContentsUComponents: main
+</pre>
+means to not skip any packages, generate Contents for <tt class="suffix">.udeb</tt>
+files, not generating Contents for <tt class="suffix">.deb</tt>s. Also it is only
+generated for the <tt>ia64</tt> architecture and only packages in component
+<tt>main</tt> are included.
+<h4><a name="exporthook">Additional index files (like .diff)</a></h4>
+Index files reprepro cannot generate itself, can be generated by telling
+it to call a script.
+<h5>using rredtool to generate pdiff files</h5>
+Starting with version 4.1.0, the <tt>rredtool</tt> coming with reprepro
+can be used as hook to create and update <tt>Packages.diff/Index</tt> files.
+<br>
+Unlike dak (which created the official Debian repositories) or the pdiff.py
+script (see below) derived from dak, an user will only need to download
+one of those patches, as new changes are merged into the old files.
+<br>
+To use it, make sure you have
+<a href="http://packages.debian.org/diff">diff</a> and
+<a href="http://packages.debian.org/gzip">gzip</a>
+installed.
+Then add something like the following to the headers of the distributions
+that should use this in <tt class="file">conf/distributions</tt>:
+<pre class="config">
+ DscIndices: Sources Release . .gz /usr/bin/rredtool
+ DebIndices: Packages Release . .gz /usr/bin/rredtool
+</pre>
+<h5>the pdiff example hook script (generates pdiff files)</h5>
+This example generates <tt class="file">Packages.diff</tt> and/or
+<tt class="file">Sources.diff</tt> directories containing a set of
+ed-style patches, so that people do not redownload the whole index
+for just some small changes.
+<br>
+To use it, copy <tt class="file">pdiff.example</tt> from the examples directory
+into your <tt class="dir">conf</tt> directory.
+(or any other directory, then you will need to give an absolute path later).
+Unpack, if needed. Rename it to pdiff.py and make it executable.
+Make sure you have
+<a href="http://packages.debian.org/python3-apt">python3-apt</a>,
+<a href="http://packages.debian.org/diff">diff</a> and
+<a href="http://packages.debian.org/gzip">gzip</a>
+installed.
+Then add something like the following to the headers of the distributions
+that should use this in <tt class="file">conf/distributions</tt>:
+<pre class="config">
+ DscIndices: Sources Release . .gz pdiff.py
+ DebIndices: Packages Release . .gz pdiff.py
+</pre>
+More information can be found in the file itself. You should read it.
+<h5>the bzip2 example hook script</h5>
+This is an very simple example.
+Simple and mostly useless,
+as reprepro has built in <tt>.bz2</tt> generation support,
+unless you compiled it your own with <tt>--without-libbz2</tt> or
+with no <tt>libbz2-dev</tt> installed.
+<br>
+To use it, copy <tt class="file">bzip.example</tt> from the examples directory
+into your <tt class="dir">conf</tt> directory.
+(or any other directory, then you will need to give an absolute path later).
+Unpack, if needed. Rename it to bzip2.sh and make it executable.
+Then add something like the following to the headers of the distributions
+that should use this in <tt class="file">conf/distributions</tt>:
+<pre class="config">
+ DscIndices: Sources Release . .gz bzip2.sh
+ DebIndices: Packages Release . .gz bzip2.sh
+ UDebIndices: Packages . .gz bzip2.sh
+</pre>
+The script will compress the index file using the
+<a href="http://packages.debian.org/bzip2">bzip2</a> program and tell
+reprepro which files to include in the Release file of the distribution.
+<h5>internals</h5>
+TO BE CONTINUED
+<h4>...</h4>
+TO BE CONTINUED
+<h2><a name="localpackages">Local packages</a></h2>
+There are two ways to get packages not yet in any repository into yours.
+<dl><dt>includedsc, includedeb, include</dt><dd>
+These are for including packages at the command line.
+Many options are available to control what actually happens.
+You can easily force components, section and priority and/or choose to
+include only some files or only in specific architectures.
+(Can be quite useful for architecture all packages depending on some
+packages you will some time before building for some of your architectures).
+Files can be moved instead of copied and most sanity checks overwritten.
+They are also optimized towards being fast and simply try things instead of
+checking a long time if they would succeed.
+</dd><dt>processincoming</dt><dd>
+This command checks for changes files in an incoming directory.
+Being optimized for automatic processing (i.e. trying to checking
+everything before actually doing anything), it can be slower
+(as every file is copied at least once to sure the owner is correct,
+with multiple partitions another copy can follow).
+Component, section and priority can only be changed via the distribution's
+override files. Every inclusion needs a <tt class="suffix">.changes</tt> file.
+<br>
+This method is also relatively new (only available since 2.0.0), thus
+optimisation for automatic procession will happen even more.
+</dd></dl>
+<h3><a name="include">Including via command line</a></h3>
+There are three commands to directly include packages into your repository:
+<tt class="command">includedeb</tt>, <tt class="command">includedsc</tt>
+and <tt class="command">includechanges</tt>.
+Each needs to codename of the distribution you want to put your package into
+as first argument and a file of the appropriate type
+(<tt class="suffix">.deb</tt>, <tt class="suffix">.dsc</tt> or
+ <tt class="suffix">.changes</tt>, respectively) as second argument.
+<br>
+If no component is specified via <tt class="option">--component</tt>
+(or short <tt class="option">-C</tt>), it will be guessed looking at its
+section and the components of that distribution.
+<br>
+If there are no <tt class="option">--section</tt>
+(or short <tt class="option">-S</tt>) option, and it is not specified
+by the (binary or source, depending on the type) override file of the
+distribution, the value from the <tt class="suffix">.changes</tt>-file
+is used (if the command is <tt class="command">includechanges</tt>)
+or it is extracted out of the file (if it is a
+<tt class="suffix">.deb</tt>-file, future versions might also try to
+extract it from a <tt class="suffix">.dsc</tt>'s diff or tarball).
+<br>
+Same with the priority and the <tt class="option">--priority</tt>
+(or short <tt class="option">-P</tt>) option.
+<br>
+With the <tt class="option">--architecture</tt> (or short <tt class="option">-A</tt>)
+option, the scope of the command is limited to that architecture.
+<tt class="command">includdeb</tt> will add a Architecture <tt>all</tt>
+packages only to that architecture (and complain about Debian packages for
+other architectures).
+<tt class="command">include</tt> will do the same and ignore packages for
+other architectures (source packages will only be included if the value
+for <tt class="option">--architecture</tt> is <tt>source</tt>).
+<br>
+To limit the scope to a specify type of package, use the
+<tt class="option">--packagetype</tt> or short <tt class="option">-T</tt>
+option. Possible values are <tt>deb</tt>, <tt>udeb</tt> and <tt>dsc</tt>.
+<br>
+When using the <tt class="option">--delete</tt> option, files will
+be moved or deleted after copying them.
+Repeating the <tt class="option">--delete</tt> option will also delete
+unused files.
+<br>
+TO BE CONTINUED.
+<h3><a name="incoming">Processing an incoming queue</a></h3>
+Using the <tt class="command">processincoming</tt> command reprepro
+can automatically process incoming queues.
+While this is still improveable (reprepro still misses ways to send
+mails and especially an easy way to send rejection mails to the
+uploader directly), it makes it easy to have an directory where you
+place your packages and reprepro will automatically include them.
+<br>
+To get this working you need three things:
+<ul>
+<li><a href="#processincoming-incoming-config">
+a file <tt class="file">conf/incoming</tt> describing your incoming directories,
+</a></li>
+<li><a href="#processincoming-dist-config">
+a <tt class="file">conf/distribution</tt> file describing your distributions
+(as always with reprepro)
+and
+</a></li>
+<li><a href="#processincoming-calling">
+a way to get reprepro called to process it.
+</a></li>
+</ul>
+<a name="processincoming-incoming-config">
+<h4>The file <tt class="file">conf/incoming</tt></h4></a>
+describes the different incoming queues.
+As usual the different chunks are separated by empty lines.
+Each chunk can have the following fields:
+<dl><dt>Name</dt><dd>This
+is the name of the incoming queue, that <tt class="command">processincoming</tt>
+wants as argument.</dd>
+<dt>IncomingDir</dt><dd>The actual directory to look for
+<tt class="suffix">.changes</tt> files.</dd>
+<dt>TempDir</dt><dd>To ensure integrity of the processed files and their
+permissions,
+every file is first copied from the incoming directory to this directory.
+Only the user reprepro runs as needs write permissions here.
+It speeds things up if this directory is in the same partition as the pool.
+<dt>Allow</dt><dd>
+This field lists the distributions this incoming queue might inject packages
+into.
+Each item can be a pair of a name of a distribution to accept and a distribution
+to put it into.
+Each upload has each item in its <tt class="field">Distribution:</tt> field
+compared first to last to each of this items and is put in the first distribution
+accepting it. For example
+<pre class="line">
+Allow: stable>etch stable>etch-proposed-updates mystuff unstable>sid
+</pre>
+will put a <tt class="suffix">.changes</tt> file with
+<tt class="field">Distribution: stable</tt> into etch.
+If that is not possible (e.g. because etch has a
+<tt class="field">UploadersList</tt> option not allowing this) it will
+be put into etch-proposed-updates.
+And a <tt class="suffix">.changes</tt> file with
+<tt class="field">Distribution: unstable</tt> will be put into sid, while
+with <tt class="field">Distribution: mystuff</tt> will end up in mystuff.
+<br>
+If there is a <tt class="field">Default</tt> field, the <tt class="field">Allow</tt>
+field is optional.</dd>
+<dt>Default</dt><dd>
+Every upload not caught by an item of the <tt class="field">Allow</tt>
+field is put into the distribution specified by this.
+<br>
+If there is a <tt class="field">Allow</tt> field, the <tt class="field">Default</tt>
+field is optional.</dd>
+<dt>Multiple</dt><dd>
+This field only makes a difference if a <tt class="suffix">.changes</tt> file
+has multiple distributions listed in its <tt class="field">Distribution:</tt>
+field.
+Without this field each of those distributions is tried according to the
+above rules until the package is added to one (or none accepts it).
+With this field it is tried for each distribution, so a package can be upload
+to multiple distributions at the same time.
+</dd>
+<dt>Permit</dt><dd>
+A list of options to allow things otherwise causing errors.
+(see the manpage for possible values).
+<br>This field os optional.</dd>
+<dt>Cleanup</dt><dd>
+Determines when and what files to delete from the incoming queue.
+By default only successfully processed <tt class="suffix">.changes</tt> files
+and the files references by those are deleted.
+For a list of possible options take a look into the man page.
+<br>This field os optional.</dd>
+</dl>
+<a name="processincoming-dist-config">
+<h4><tt class="file">conf/distribution</tt> for <tt class="command">processincoming</tt></h4></a>
+There are no special requirements on the <tt class="file">conf/distribution</tt>
+file by processincoming. So even a simple
+<pre class="file">
+Codename: mystuff
+Architectures: i386 source
+Components: main non-free contrib bad
+</pre>
+will work.
+<br>
+The <tt class="field">Uploaders</tt> field can list a file limiting
+uploads to this distribution to specific keys and
+<tt class="field">AlsoAcceptFor</tt> is used to resolve unknown names
+in <tt class="file">conf/incoming</tt>'s <tt class="field">Allow</tt>
+and <tt class="field">Default</tt> fields.
+<a name="processincoming-calling">
+<h4>Getting <tt class="command">processincoming</tt> called.</h4></a>
+While you can just call <tt class="command">reprepro processincoming</tt> manually,
+having an incoming queue needing manual intervention takes all the fun out of
+having an incoming queue, so usually so automatic way is chosen:
+<ul>
+<li>Dupload and dput have ways to call an hook after an package was uploaded.
+This can be an ssh to the host calling reprepro.
+The disavantage is having to configure this in every
+<tt class="file">.dupload.conf</tt> on every host you want to upload and give
+everyone access to ssh and permissions on the archive who should upload.
+The advantage is you can configure reprepro to have interactive scripts or
+ask for passphrases.
+</li>
+<li>Install a cron-job calling reprepro every 5 minutes. Cron is usually
+available everywhere and getting the output sent by mail to you or a mailing
+list is easy.
+The annoying part is having to wait almost 5 minutes for the processing.
+</li>
+<li>Use something like <a href="http://packages.debian.org/inoticoming"><tt class="external">inoticoming</tt></a>.
+Linux has a syscall called inotify, allowing a program to be run whenever
+something happens to a file.
+One program making use of this is inoticoming. It watches a directory using
+this facility and whenever a <tt class="suffix">.changes</tt> file is completed
+it can call reprepro for you.
+(As this happens directly, make sure you always upload the <tt class="suffix">.changes</tt>
+file last, dupload and dput always ensure this).
+This can be combined with Debian's cron-extension to have a program started at
+boot time with the <tt>@reboot</tt> directive.
+For example with a crontab like:
+<pre class="file">
+MAILTO=myaddress@somewhere.tld
+
+@reboot inoticoming --logfile /my/basedir/logs/i.log /my/basedir/incoming/ --stderr-to-log --stdout-to-log --suffix '.changes' --chdir /my/basedir reprepro -b /my/basedir --waitforlock 100 processincoming local {} \;
+</pre>
+</li>
+</ul>
+<h2><a name="mirroring">Mirroring / Updating</a></h2>
+Reprepro can fetch packages from other repositories.
+For this it uses apt's methods from <tt class="dir">/usr/lib/apt/methods/</tt>
+so everything (http, ftp, ...) that works with apt should also work with reprepro.
+Note that this works on the level of packages, even though you can tell reprepro
+to create a distribution having always the same packages as some remote repository,
+the repository as a whole may not look exactly the same but only have the same set
+of packages in the same versions.
+<br>
+You can also only mirror a specific subset of packages, merge multiple repositories
+into one distribution, or even have distributions mixing remote and local packages.
+<br>
+Each distribution to receive packages from other repositories needs an
+<tt class="field">Update:</tt> field listing the update rules applied to it.
+Those update rules are listed in <tt class="file">conf/updates</tt>.
+There is also the magic <tt>-</tt> update rule, which tells reprepro to delete
+all packages not readded by later rules.
+<br>
+To make reprepro to update all distributions call <tt>reprepro update</tt>
+without further arguments, or give the distributions to update as additional
+arguments.
+<br>
+Let's start with some examples:
+<h3><a name="update-examples">Updating examples</a></h3>
+Let's assume you have the following <tt class="file">conf/distributions</tt>
+<pre class="file">
+Codename: etch
+Architectures: i386 source
+Components: main contrib
+Update: local - debian security
+
+Codename: mystuff
+Architectures: abacus source
+Components: main bad
+Update: debiantomystuff
+</pre>
+and the following <tt class="file">conf/updates</tt>
+<pre class="file">
+Name: local
+Method: http://ftp.myorg.tld/debian
+
+Name: debian
+Method: http://ftp.de.debian.org/debian
+VerifyRelease: A70DAF536070D3A1
+Config: Acquire::Http::Proxy=http://proxy.yours.org:8080
+
+Name: security
+Suite: */updates
+Method: http://security.eu.debian.org/
+Fallback: http://security.debian.org/
+VerifyRelease: A70DAF536070D3A1
+Config: Acquire::Http::Proxy=http://proxy.yours.org:8080
+
+Name: debiantomystuff
+Suite: sid
+Method: http://ftp.de.debian.org/debian
+Architectures: i386&gt;abacus source
+Components: main non-free&gt;bad contrib&gt;bad
+FilterFormula: Architecture (== all)| !Architecture
+FilterList: deinstall list
+</pre>
+and a file <tt class="file">conf/list</tt> with some
+output as <tt>dpkg --get-selections</tt> is printing.
+<br>
+If you then run
+<tt class="command">reprepro update etch</tt> or
+<tt class="command">reprepro checkupdate etch</tt>,
+reprepro looks at etch's <tt class="field">Update:</tt> line
+and finds four rules. The first is the <tt>local</tt> rule,
+which only has a method, so that means it will download the
+<tt class="file">Release</tt> file from
+<tt>http://ftp.myorg.tld/debian/dists/etch/Release</tt> and
+(unless it already has downloaded them before or that
+repository does not have all of them) downloads the
+<tt>binary-i386/Packages.gz</tt>
+and <tt>source/Sources.gz</tt> files for main and contrib.
+The same is done for the <tt>debian</tt> and <tt>security</tt>
+rules.
+As they have a <tt class="field">VerifyRelease</tt> field,
+Release.gpg is also downloaded and checked to be signed with the
+given key
+(which you should have imported to you <tt class="external">gpg</tt>
+keyring before).
+As security has a <tt class="field">Suite:</tt> field, not the codename,
+but the content of this field (with an possible<tt>*</tt> replaced by the codename),
+is used as distribution to get.
+<br>
+Then it will parse for each part of the distribution, parse the files it
+get from left to right.
+For each package it starts with the version currently in the distribution,
+if there is a newer on in <tt>local</tt> it will mark this.
+Then there is the delete rule <tt>-</tt>, which will mark it to be deleted
+(but remembers what was there, so if later the version in the distribution
+or the version in <tt>local</tt> are newest, it will get them from here avoiding
+slow downloads from far away). Then it will look into <tt>debian</tt> and then
+in <tt>security</tt>, if they have a newer version (or the same version, clearing
+the deletion mark).
+<br>
+If you issued <tt class="command">checkupdate</tt> reprepro will print what it would
+do now, otherwise it tries to download all the needed files and when it got all,
+change the packages in the distribution to the new ones, export the index files
+for this distribution and finally delete old files no longer needed.
+<br>
+TO BE CONTINUED.
+<h2><a name="propagation">Propagation of packages</a></h2>
+You can copy packages between distributions using the
+<tt class="command">pull</tt> and <tt class="command">copy</tt> commands.
+<br>
+With the <tt class="command">copy</tt> command you can copy packages
+by name from one distribution to the other within the same repository.
+<br>
+With the <tt class="command">pull</tt> command you can pull all packages
+(or a subset defined by some list, or exceptions by some list, or by some
+formula, or ...) from one distribution to another within the same formula.
+<br>
+Note that both assume the filenames of the corresponding packages in the
+pool will not differ, so you cannot move packages from one component to another.
+<br>
+Let's just look at a little example, more information can be found in the man page.
+<br>
+Assume you upload all new packages to a distribution and you want another
+so you can keep using an old version until you know the newer works, too.
+One way would be to use something like the following
+<tt class="file">conf/distributions</tt>:
+<pre class="file">
+Codename: development
+Suite: unstable
+Components: main extra
+Architectures: i386 source
+
+Codename: bla
+Suite: testing
+Components: main extra
+Architectures: i386 source
+Pull: from_development
+</pre>
+and <tt class="file">conf/pulls</tt>:
+<pre class="file">
+Name: from_development
+From: development
+</pre>
+i.e. you have two distributions, bla and development.
+Now you can just upload stuff to development (or it's alias unstable).
+And when you want a single package to go to testing, you can use the copy
+command:
+<pre class="shell">
+reprepro copy bla development name1 name2 name3
+</pre>
+If you do not want to copy all packages of a given name, but only some
+of them, you can use <tt>-A</tt>, <tt>-T</tt> and <tt>-C</tt>:
+<pre class="shell">
+reprepro -T deb -A i386 copy bla development name1
+</pre>
+will copy <tt class="suffix">.deb</tt> packages called name1 from the i386
+parts of the distribution.
+<br>
+TO BE CONTINUED
+<h2><a name="snapshosts">Snapshots</a></h2>
+There is a gensnapshot command.<br>
+TO BE DOCUMENTED
+<h2><a name="tracking">Source package tracking</a></h2>
+TO BE DOCUMENTED
+<h2><a name="hooks">Extending reprepro / Hooks and more</a></h2>
+When reprepro misses some functionality,
+it often can be added by some kind of hook.
+<br>
+Currently you can execute your own scripts at the following occasions:
+<ul>
+<li><a href="#addhook">after adding or removing packages</a></li>
+<li><a href="#byhandhook">to process byhand files</a></li>
+<li><a href="#exporthook">when creating index files (Packages.gz, Sources.gz)</a></li>
+<li><a href="#signhook">when signing releases</a></li>
+<li><a href="#outhook">after changing the visible files of the repository managed</a></li>
+<li><a href="#endhook">when reprepro finished</a></li>
+</ul>
+<h3><a name="addhook">Scripts to be run when adding or removing packages</a></h3>
+Whenever a package is added or removed,
+you can tell reprepro to log that to some file and/or call a script using the
+<tt>Log:</tt> directive in <tt class="file">conf/distributions</tt>.
+<br>
+This script can send out mails and do other logging stuff,
+but despite the name, it is not restricted to logging.
+<br>
+<h4>Automatically extracting changelog and copyright information</h4>
+reprepro ships with an example script to extract <tt class="file">debian/changelog</tt>
+and <tt class="file">debian/copyright</tt>
+files from source packages into a hierarchy loosely resembling the way changelogs
+are made available at
+<a href="http://packages.debian.org/changelogs/">http://packages.debian.org/changelogs/</a>.
+<br>
+All you have to do is to copy (or unpack if compressed) the file
+<tt class="file">changelogs.example</tt> from the examples directory
+in the reprepro source or
+<a href="file:///usr/share/doc/reprepro/examples/">/usr/share/doc/reprepro/examples/</a>
+of your installed reprepro package into your <tt class="directory">conf/</tt> directory
+(or somewhere else, then you will need an absolute path later), perhaps
+change some directories specified in it
+and add something like the following lines
+to all distributions in <tt class="file">conf/distributions</tt> that should use
+this feature:
+<pre class="config">
+Log:
+ --type=dsc changelogs.example
+</pre>
+If you still want to log to some file, just keep the filename there:
+<pre class="config">
+Log: mylogfilename
+ --type=dsc changelogs.example
+</pre>
+Then cause those files to be generated for all existing files via
+<pre class="command">
+reprepro rerunnotifiers
+</pre>
+and all future source packages added or removed will get this list automatically
+updated.
+<h4>Writing your own Log: scripts</h4>
+You can list an arbitrary amount of scripts, to be called at specified times
+(which can overlap or even be the same):
+<pre class="config">
+Log: logfilename
+ --type=dsc script-to-run-on-source-package-changes
+ script-to-run-on-package-changes
+ another-script-to-run-on-package-changes
+ --type=dsc --component=main script-to-run-on-main-source-packages
+ --architecture=i386 --type=udeb script-to-run-on-i386-udebs
+ --changes script-to-run-on-include-or-processincoming
+</pre>
+There are two kind of scripts:
+The first one is called when a package was added or removed.
+Using the <tt class="option">--archtecture=</tt>,
+<tt class="option">--component=</tt> and
+<tt class="option">--type=</tt> options you can limit it to specific parts
+of the distribution.
+The second kind is marked with <tt class="option">--changes</tt> and is
+called when a <tt class="suffix">.changes</tt>-file was added with
+<tt class="command">include</tt> or <tt class="command">processincoming</tt>.
+Both are called asynchronous in the background <emph>after</emph> everything was done,
+but before no longer referenced files are deleted (so the files of the
+replaced or deleted package are still around).
+<h5>Calling conventions for package addition/removal scripts</h5>
+This type of script is called with a variable number of arguments.
+The first argument is the action. This is either
+<tt>add</tt>, <tt>remove</tt> or <tt>replace</tt>.
+The next four arguments are the codename of the affected distribution
+and the packagetype, component and architecture in that distribution
+affected.
+The sixth argument is the package's name.
+After that is the version of the added package (<tt>add</tt> and <tt>replace</tt>)
+and the version of the removed package (<tt>remove</tt> and <tt>replace</tt>).
+Finally the filekeys of the new (<tt>add</tt> and <tt>replace</tt>) and/or
+removed (<tt>remove</tt> and <tt>replace</tt>) package are listed
+starting with the marker &quot;<tt>--</tt>&quot; followed by each filekey
+(the name of the file in the <tt class="dir">pool/</tt>
+relative to <tt class="env">REPREPRO_OUT_DIR</tt>)
+as its own argument.
+<br>
+The environment variable <tt class="env">REPREPRO_CAUSING_COMMAND</tt>
+contains the command of the action causing this change.
+The environment variable
+<tt class="env">REPREPRO_CAUSING_FILE</tt> contains the name of the file
+given at the command line causing this package to be changed,
+if there is one.
+(i.e. with <tt class="command">includedeb</tt>,
+<tt class="command">includedsc</tt> and <tt class="command">include</tt>).
+The environment variables
+<tt class="env">REPREPRO_CAUSING_RULE</tt> and
+<tt class="env">REPREPRO_FROM</tt> are
+the name of the update or pull rule pulling in a package
+and the name of the distribution a package is coming from.
+What this name is depends on the command and for most commands
+it is simply not set at all.
+And of course all the <tt class="env">REPREPRO_*_DIR</tt> variables are set.
+<h5>Calling conventions for <tt class="suffix">.changes</tt> scripts</h5>
+This type of script is called with 5 or 6 arguments.
+The first is always &quot;<tt>accepted</tt>&quot;, to make it easier to
+check it is configued the right way.
+The second argument is the codename of the distribution the
+<tt class="suffix">.changes</tt>-file was added to.
+The third argument is the source name, the forth the version.
+The fifth name is the <tt class="suffix">.changes</tt> itself
+(in case of <tt class="command">processingcoming</tt> the secure copy in the
+temporary dir).
+There is a sixth argument if the <tt class="suffix">.changes</tt>-file was
+added to the <tt class="dir">pool/</tt>:
+The filekey of the added .changes file
+(i.e. the filename relative to <tt class="env">REPREPRO_OUT_DIR</tt>).
+<br>
+The environment variable <tt class="env">REPREPRO_CAUSING_COMMAND</tt>
+contains the command of the action causing this change.
+The environment variable
+<tt class="env">REPREPRO_CAUSING_FILE</tt> contains the name of the file
+given at the command line, if there is one
+(e.g. with <tt class="command">include</tt>).
+And of course all the <tt class="env">REPREPRO_*_DIR</tt> variables are set.
+<h3><a name="byhandhook">Scripts to be run to process byhand files</a></h3>
+<tt class="suffix">.changes</tt> files can (beside the usual packages files
+to be included in the repository) contain additional files to be processed
+specially.
+Those are marked by the special section <tt class="constant">byhand</tt> (in Debian)
+or <tt class="constant">raw-</tt>something (in Ubuntu).
+Besides storing them just in the pool besides the packages using the
+<tt class="constant">includebyhand</tt> value in the <tt class="field">Tracking</tt>
+settings you can also let reprepro process a hook to process them when encountering
+them in the <tt class="action">processincomming</tt> action
+(Typical usages are uploading documentation files this way that are unpacked next
+to the repository, or installer images or stuff like that).
+
+To use them add to the distribution's defining stanca in <tt class="filename">conf/distributions</tt> a field like:
+<pre class="config">
+ByhandHooks:
+ byhand * manifesto.txt handle-byhand.sh
+</pre>
+This will call the hook script <tt class="constant">handle-byhand.sh</tt> for every byhand file with section <tt class="constant">byhand</tt>, any priority and filename <tt class="constant">manifesto.txt</tt>. (The first three fields allow glob characters for matching).
+
+The script will then be called with 5 arguments:
+the codename of the distribution,
+the section,
+the priority,
+the filename as found in the changes file and
+the filename of where the script can find the actual file.
+
+<h3>Scripts to be run when creating index files (Packages.gz, Sources.gz)</h3>
+this hook is described in the section <a href="#exporthook">&quot;Additional index files&quot;</a>.
+
+<h3><a name="signhook">Scripts to be run when signing releases</a></h3>
+Instead of creating <tt class="filename">InRelease</tt> and
+<tt class="filename">Release.gpg</tt> files using libgpgme,
+the <tt class="option">SignWith</tt> option can also contain
+a exclamation mark followed by a space and the name of a hook script to call.
+
+The script gets three arguments:
+The filename to sign,
+the filename of the InRelease file to create and
+the filename of the Release.gpg to create
+(a Release.gpg does not need to be created. reprepro will assume you do not care about that legacy file if it is not created).
+
+Reprepro will wait for the script to continue and only do the renaming
+and deleting of old files after that, so the script might wait for example
+for someone to copy files from the system, signing and copying them it,
+for example.
+
+<h3><a name="outhook">Scripts to be run after changing the visible files of the repository managed</a></h3>
+When using the <tt class="option">--outhook</tt> command line option (or the corresponding
+<tt class="constant">outhook</tt> in the <tt class="filename">options</tt> file),
+reprepro will create a <tt class="suffix">.outlog</tt> file in the log directory describing
+any changes done to the out dir and calls the hook script given as argument with this
+file as argument.
+
+The <tt class="suffix">.outlog</tt> file consists of lines each starting with a keyword
+and then some arguments separated by tab characters.
+
+The possible keywords are:
+<ul>
+<li><tt class="constant">POOLNEW</tt>:
+One argument is the filekey of a file newly added to the pool.
+<li><tt class="constant">POOLDELETE</tt>:
+One argument is the filekey of a file removed from the pool.
+<li><tt class="constant">START-DISTRIBUTION</tt>, <tt class="constant">END-DISTRIBUTION</tt>:
+two or three arguments: the codename, the directory,
+and the suite (if set).
+<li><tt class="constant">START-SNAPSHOT</tt>, <tt class="constant">END-SNAPSHOT</tt>:
+three arguments: the codename, the directory, and the name of the snapshot generated.
+<li><tt class="constant">DISTFILE</tt>:
+three arguments: the directory of the distribution (relative to out dir), the name relative to that directory, and the filename generated by reprepro.
+<li><tt class="constant">DISTSYMLINK</tt>:
+three arguments: the directory of the distribution (relative to out dir), the name relative to that directory, and the symlink target (relative to that directory).
+<li><tt class="constant">DISTDELETE</tt>:
+two arguments: the directory of the distribution (relative to out dir), the name relative to that directory of a file no longer there.
+<li><tt class="constant">DISTKEEP</tt> (not yet generated):
+two arguments: the directory of the distribution (relative to out dir), the name relative to that directory.
+</ul>
+
+All <tt class="constant">POOLNEW</tt> come before any distribution changes referencing them
+and all <tt class="constant">POOLDELETE</tt> will be afterwards.
+Each line beloging to a distribution is guaranteed to be between the corresponding
+<tt class="constant">START-DISTRIBUTION</tt> and
+<tt class="constant">END-DISTRIBUTION</tt> or between a
+<tt class="constant">START-SNAPSHOT</tt> and
+<tt class="constant">END-SNAPSHOT</tt> or between a
+with the same directory
+(i.e. there is some redundancy so you can choose to parse the information where it is more conventient for you).
+
+The lines starting with <tt class="constant">DIST</tt> describe new or modified files in the distribution description exported by reprepro. No hint is given if that file was previously non-existant, a proper file or a symlink (i.e. if you copy stuff, do not make any assumptions about that).
+Future versions of reprepro might create <tt class="constant">DISTKEEP</tt> lines to denote files that have not changed (i.e. just ignore those lines to be future-proof).
+
+The directories for the distribution entries are what apt expects them (i.e. always starting with <tt class="constant">dists/</tt>, while the third argument to <tt class="constant">DISTFILE</tt> is the name reprepro generated (i.e. starts with the distdir value, which can be configured to not end with <tt class="constant">dists/</tt>).
+
+<h3><a name="endhook">when reprepro finished</a></h3>
+With the <tt class="option">--endhook</tt> command line option (or the corresponding
+<tt class="constant">endhook</tt> in the <tt class="filename">options</tt> file) you
+can specify a hook to be executed after reprepro finished but before reprepro returns
+the to calling process.
+The hook gets all the command line arguments after the options (i.e. starting with
+the name of the action) and the exit code reprepro would have produces.
+For an example see the man page.
+<h2><a name="maintenance">Maintenance</a></h2>
+This section lists some commands you can use to check and improve the health
+of you repository.
+<br>
+Normally nothing of this should be needed, but taking a look from time to time
+cannot harm.
+<pre class="command">
+reprepro -b $YOURBASEDIR dumpunreferenced
+</pre>
+This lists all files reprepro knows about that are not marked as needed by anything.
+Unless you called reprepro with the <tt class="option">--keepunreferenced</tt>
+option, those should never occur. Though if reprepro is confused or interrupted it
+may sometimes prefer keeping files around instead of deleting them.
+<pre class="command">
+reprepro -b $YOURBASEDIR deleteunreferenced
+</pre>
+This is like the command before, only that such files are directly forgotten and
+deleted.
+<pre class="command">
+reprepro -b $YOURBASEDIR check
+</pre>
+Look if all needed files are in fact marked needed and known.
+<pre class="command">
+reprepro -b $YOURBASEDIR checkpool
+</pre>
+Make sure all known files are still there and still have the same checksum.
+<pre class="command">
+reprepro -b $YOURBASEDIR checkpool fast
+</pre>
+As the command above, but do not compute checksums.
+<pre class="command">
+reprepro -b $YOURBASEDIR tidytracks
+</pre>
+If you use source package tracking, check for files kept because of this
+that should no longer by the current rules.
+<br>
+If you fear your tracking data could have became outdated,
+you can also try the retrack command:
+<pre class="command">
+reprepro -b $YOURBASEDIR retrack
+</pre>
+That refreshes the tracking information about packages used and then
+runs a tidytracks. (Beware: don't do this with reprepro versions before 3.0.0).
+<h2><a name="internals">Internals</a></h2>
+reprepro stores the data it collects in Berkeley DB file (<tt class="suffix">.db</tt>)
+in a directory called <tt class="dir">db/</tt> or whatever you specified via command
+line. With a few exceptions, those files are NO CACHES, but the actual data.
+While some of those data can be regained when you lose those files, they are better
+not deleted.
+<h3>packages.db</h3>
+This file contains the actual package information.
+<br>
+It contains a database for every (codename,component,architecture,packagetype) quadruple
+available.
+<br>
+Each is indexed by package name and essentially contains the information written do
+the Packages and Sources files.
+<br>
+Note that if you change your <tt class="file">conf/distributions</tt> to no longer
+list some codenames, architectures or components,
+that will not remove the associated databases in this file.
+That needs an explicit call to <tt class="command">clearvanished</tt>.
+<h3>references.db</h3>
+This file contains a single database that lists for every file why this file
+is still needed.
+This is either an identifier for a package database, an tracked source package,
+or a snapshot.
+<br>
+Some low level commands to access this are (take a look at the manpage for how to use them):
+<dl class="commands">
+<dt class="command">rereference</dt><dd>recreate references (i.e. forget old and create newly)</dd>
+<dt class="command">dumpreferences</dt><dd>print a list of all references</dd>
+<dt class="command">_removereferences</dt><dd>remove everything referenced by a given identifier</dd>
+<dt class="command">_addreference</dt><dd>manually add a reference</dd>
+<dt class="command">_addreferences</dt><dd>manually add multiple references</dd>
+</dl>
+<h3>files.db / checksums.db</h3>
+These files contains what reprepro knows about your <tt class="dir">pool/</tt> directory,
+i.e. what files it things are there with what sizes and checksums.
+The file <tt class="filename">files.db</tt> is used by reprepro before version 3.3
+and kept for backwards compatibility.
+If your repository was only used with newer versions you can safely delete it.
+Otherwise you should run <tt class="command">collectnewchecksums</tt> before deleting
+it.
+The file <tt class="filename">checksums.db</tt> is the new file used since
+version 3.3.
+It can store more checksums types (<tt class="filename">files.db</tt> only contained
+md5sums, <tt class="filename">checksums.db</tt> can store arbitrary checksums and
+reprepro can even cope with it containing checksum types it does not yet know of)
+but for compatibility with pre-3.3 versions is not the canonical source of information
+as long as a <tt class="filename">files.db</tt> file exists).
+<br>
+If you manually put files in the pool or remove them, you should tell reprepro about that.
+(it sometimes looks for files there without being told, but it never forgets files
+except when it would have deleted them anyway).
+Some low level commands (take a look at the man page for how to use them):
+<dl class="commands">
+<dt class="command">collectnewchecksums</dt><dd>Make sure every file is listed in <tt class="filename">checksums.db</tt> and with all checksum types your reprepro supports.</dd>
+<dt class="command">checkpool fast</dt><dd>Make sure all files are still there.</dd>
+<dt class="command">checkpool</dt><dd>Make sure all files are still there and correct.</dd>
+<dt class="command">dumpunreferenced</dt><dd>Show all known files without reference.</dd>
+<dt class="command">deleteunreferenced</dt><dd>Delete all known files without reference.</dd>
+<dt class="command">_listmd5sums</dt><dd>Dump this database (old style)</dd>
+<dt class="command">_listchecksums</dt><dd>Dump this database (new style)</dd>
+<dt class="command">_detect</dt><dd>Add files to the database</dd>
+<dt class="command">_forget</dt><dd>Forget that some file is there</dd>
+<dt class="command">_addmd5sums</dt><dd>Create the database from dumped data</dd>
+<dt class="command">_addchecksums</dt><dd>dito</dd>
+<h3>release.cache.db</h3>
+In this file reprepro remembers what it already wrote to the <tt class="dir">dists</tt>
+directory,
+so that it can write their checksums (including the checksums of the uncompressed variant,
+even if that was never written to disk)
+in a newly to create <tt class="file">Release</tt>
+file without having to trust those files or having to unpack them.
+<h3>contents.cache.db</h3>
+This file contains all the lists of files of binary package files where reprepro
+already needed them. (which can only happen if you requested Contents files to be
+generated).
+<h3>tracking.db</h3>
+This file contains the information of the <a href="#tracking">source package tracking</a>.
+<h2><a name="recovery">Disaster recovery</a></h2>
+TO BE DOCUMENTED (see the
+<a href="http://git.debian.org/?p=mirrorer/reprepro.git;a=blob_plain;f=docs/recovery;hb=HEAD">recovery</a>
+file until then)
+<h2><a name="paranoia">Paranoia</a></h2>
+As all software, reprepro might have bugs.
+And it uses libraries not written by myself,
+which I'm thus even more sure that they will have bugs.
+Some of those bugs might be security relevant.
+This section contains some tips, to reduce the impact of those.
+<ul>
+<li>Never run reprepro as root.<br>
+All reprepro needs to work are permissions to files,
+there is no excuse for running it as root.
+</li>
+<li>Don't publish your db/ directory.<br>
+The contents of the db directory are not needed by everyone else.
+Having them available to everyone may make it easier for them to
+exploit some hypothetical problem in libdb and makes it easier to
+know in advance how exactly reprepro will act in a given circumstances,
+thus easier to exploit some hypothetical problem.
+</li>
+<li>Don't accept untrusted data without need.<br>
+If an attacker cannot do anything, they cannot do anything harmful, either.
+So if there is no need, don't offer an anonymous incoming queue.
+<tt class="program">dput</tt> supports uploading via scp, so just having
+an only group-writable incoming directory, or even better multiple incoming
+directories can be a better alternative.
+</li>
+</ul>
+External stuff being used and attack vectors opened by it:
+<dl>
+<dt>libgpgme/gpg</dt><dd>
+Almost anything is run through <tt>libgpgme</tt> and thus <tt>gpg</tt>.
+It will be used to check the <tt class="filename">Release.gpg</tt> file,
+or to read <tt class="suffix">.dsc</tt> and <tt class="suffix">.changes</tt>
+files (even when there is no key to look for specified,
+as that is the best way to get the data from the signed block).
+Avoiding this by just accepting stuff without looking for signatures on
+untrusted data is not really an option, so I know nothing to prefent this
+type of problems.
+</dd>
+<dt>libarchive</dt><dd>
+The <tt class="suffix">.tar</tt> files within <tt class="suffix">.deb</tt>
+files are normally (unless that library was
+not available while compiling) read using libarchive.
+This happens when a <tt class="suffix">.deb</tt> file is to be added
+(though only after deciding if it should be added, so if it does not have
+the correct checksum or the .changes did not have the signatures you specified,
+it is not) or when the file list is to be extracted
+(when creating <tt class="filename">Contents</tt> files).
+Note that they are not processed when only mirroring them (of course unless
+<tt class="filename">Contents</tt> files are generated), as then only the
+information from the Packages file is copied.
+</dd>
+<dt>dpkg-deb/tar</dt><dd>
+If reprepro was compiled without libarchive,
+<tt class="program">dpkg-deb</tt> is used instead, which most likely will
+call <tt class="program">tar</tt>. Otherwise just the same like the last
+item.
+</dd>
+<dt>zlib</dt><dd>
+When mirroring packages, the downloaded
+<tt class="filename">Packages.gz</tt> and <tt class="filename">Sources.gz</tt> files
+are read using zlib. Also the generated <tt class="suffix">.gz</tt> files
+are generated using it. There is no option but hoping there is no security
+relevant problem in that library.
+</dd>
+<dt>libbz2</dt><dd>
+Only used to generate <tt class="suffix">.bz2</tt> files.
+If you fear simple blockwise writing using that library has a security problem
+that can be exploited by data enough harmless looking to be written to the
+generated index files, you can always decide to no tell reprepro to generate
+<tt class="suffix">.bz2</tt> files.
+</dd>
+</dl>
+<h2><a name="counterindications">What reprepro cannot do</a></h2>
+There are some things reprepro does not do:
+<dl><dt>Verbatim mirroring</dt><dd>
+Reprepro aims to put all files into a coherent <tt>pool/</tt> hierarchy.
+Thus it cannot guarantee that files will have the same relatives path as in the
+original repository (especially if those have no pool).
+It also creates the index files from its own indices.
+While this leads to a tidy repository and possible savings of disk-space, the
+signatures of the repositories you mirror cannot be used to authenticate the mirror,
+but you will have to sign (or tell reprepro to sign for you) the result.
+While this is perfect when you only mirror some parts or specific packages or
+also have local packages that need local signing anyway, reprepro is no suitable tool
+for creating a full mirror that can be authenticated without adding the key of this
+repository.
+</dd>
+<dt>Placing your files on your own</dt><dd>
+Reprepro does all the calculation of filenames to save files as,
+bookkeeping what files are there and what are needed and so on.
+This cannot be switched off or disabled.
+You can place files where reprepro will expect them and reprepro will use
+them if their md5sum matches.
+But reprepro is not suited if you want those files outside of a pool or in
+places reprepro does not consider their canonical ones.
+</dd>
+<dt>Having different files with the same name</dt><dd>
+take a look in the <a href="http://git.debian.org/?p=mirrorer/reprepro.git;a=blob_plain;f=docs/FAQ;hb=HEAD">FAQ</a> (currently question 1.2) why and how to avoid the problem.
+
+</dd>
+</dl>
+</body>
+</html>

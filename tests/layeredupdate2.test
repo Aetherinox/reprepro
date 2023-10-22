@@ -1,0 +1,683 @@
+set -u
+. "$TESTSDIR"/test.inc
+
+dodo test ! -d db
+mkdir -p conf dists
+echo "export silent-never" > conf/options
+cat > conf/updatelog.sh <<EOF
+#!/bin/sh
+echo "\$@" >> '$WORKDIR/updatelog'
+exit 0
+EOF
+cat > conf/shouldnothappen.sh <<EOF
+#!/bin/sh
+echo "\$@" >> '$WORKDIR/shouldnothappen'
+exit 0
+EOF
+chmod a+x conf/updatelog.sh conf/shouldnothappen.sh
+cat > conf/distributions <<EOF
+Codename: boring
+Suite: unstable
+Components: main firmware
+Architectures: abacus coal source
+Log:
+	--via update updatelog.sh
+	--via include shouldnothappen.sh
+Update: - 1 2 3 4
+
+Codename: interesting
+Suite: experimental
+Components: main firmware
+Architectures: abacus coal source
+Update: 5 6 - 7 8
+
+Codename: dummy
+Components: dummycomponent
+Architectures: dummyarchitecture
+EOF
+mkdir source1 source2
+cat > conf/updates <<EOF
+Name: a
+VerifyRelease: blindtrust
+Method: copy:$WORKDIR/source1
+Architectures: dummyarchitecture
+DownloadListsAs: .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma .lzma
+Components: dummycomponent
+
+Name: b
+VerifyRelease: blindtrust
+Method: copy:$WORKDIR/source2
+Architectures: dummyarchitecture
+DownloadListsAs: .lzma .bz2 .gz .
+Flat: dummycomponent
+
+Name: ca
+From: a
+Architectures: dummyarchitecture
+Components: dummycomponent
+
+Name: ma
+From: ca
+Architectures: dummyarchitecture
+Components: main
+
+Name: wa
+From: ma
+Suite: suitename
+Architectures: source
+
+Name: 3
+From: wa
+
+Name: 4
+Suite: suitename
+From: a
+Architectures: abacus coal
+#without this I do not get a warning, why?
+Components: main firmware
+
+Name: pre1
+Flat: firmware
+From: b
+#without this I do not get a warning, why?
+Architectures: abacus coal
+FilterFormula: section (>=firmware/), section(<< firmware0)
+
+Name: 1
+From: pre1
+Suite: x
+
+Name: 2
+Flat: main
+From: b
+#without this I do not get a warning, why?
+Architectures: abacus coal source
+FilterFormula: section (<<firmware/) | section(>= firmware0) | !section
+Suite: x
+
+Name: 5
+From: b
+
+Name: 6
+From: b
+
+Name: 7
+From: b
+
+Name: 8
+From: b
+EOF
+
+DISTRI=dummy PACKAGE=aa EPOCH="" VERSION=1 REVISION=-1000 SECTION="base" genpackage.sh -sa
+DISTRI=dummy PACKAGE=bb EPOCH="" VERSION=2 REVISION=-0 SECTION="firmware/base" genpackage.sh -sa
+DISTRI=dummy PACKAGE=cc EPOCH="" VERSION=1 REVISION=-1000 SECTION="base" genpackage.sh -sa
+DISTRI=dummy PACKAGE=dd EPOCH="" VERSION=2 REVISION=-0 SECTION="firmware/base" genpackage.sh -sa
+
+mkdir source1/pool source1/pool/main source1/pool/firmware
+mv aa* source1/pool/main
+mv bb* source1/pool/firmware
+mv cc* source2
+mv dd* source2
+
+mkdir source2/x
+cd source2
+echo 'dpkg-scanpackages . /dev/null > x/Packages'
+dpkg-scanpackages . /dev/null > x/Packages
+cd ..
+cat > sourcesections <<EOF
+cc standard base
+dd standard firmware/base
+EOF
+cd source2
+echo 'dpkg-scansources . sourcesections > x/Sources'
+dpkg-scansources . ../sourcesections > x/Sources
+cd ..
+rm sourcesections
+
+cat > source2/x/InRelease <<EOF
+Codename: x
+Suite: toostupidfornonflat
+Architectures: coal abacus
+MD5Sum:
+ $(mdandsize source2/x/Sources) Sources
+ $(mdandsize source2/x/Packages) Packages
+EOF
+
+mkdir -p source1/dists/suitename/main/binary-abacus
+mkdir source1/dists/suitename/main/binary-coal
+mkdir source1/dists/suitename/main/source
+mkdir -p source1/dists/suitename/firmware/binary-abacus
+mkdir source1/dists/suitename/firmware/binary-coal
+mkdir source1/dists/suitename/firmware/source
+
+cd source1
+dpkg-scansources pool/main /dev/null > dists/suitename/main/source/Sources
+dpkg-scanpackages pool/main /dev/null > dists/suitename/main/binary-abacus/Packages
+dpkg-scanpackages -a coal pool/main /dev/null > dists/suitename/main/binary-coal/Packages
+dpkg-scansources pool/firmware /dev/null > dists/suitename/firmware/source/Sources
+dpkg-scanpackages pool/firmware /dev/null > dists/suitename/firmware/binary-abacus/Packages
+dpkg-scanpackages -a coal pool/firmware /dev/null > dists/suitename/firmware/binary-coal/Packages
+cd ..
+
+cat > source1/dists/suitename/InRelease <<EOF
+Codename: hohoho
+Suite: suitename
+Architectures: coal abacus
+MD5Sum:
+ 00000000000000000000000000000000 0 main/binary-abacus/Packages.lz
+ 00000000000000000000000000000000 0 main/binary-abacus/Packages.gz
+ 00000000000000000000000000000000 0 main/binary-coal/Packages.lz
+ 00000000000000000000000000000000 0 main/source/Sources.lz
+ 00000000000000000000000000000000 0 firmware/binary-abacus/Packages.lz
+ 00000000000000000000000000000000 0 firmware/binary-coal/Packages.lz
+ 00000000000000000000000000000000 0 firmware/source/Sources.lz
+ 00000000000000000000000000000000 0 main/binary-coal/Packages.gz
+ 00000000000000000000000000000000 0 main/source/Sources.gz
+ 00000000000000000000000000000000 0 firmware/binary-abacus/Packages.gz
+ 00000000000000000000000000000000 0 firmware/binary-coal/Packages.gz
+ 00000000000000000000000000000000 0 firmware/source/Sources.gz
+EOF
+
+sed -e 's/\.lzma/.lz/' -i  conf/updates
+
+testrun - --lunzip=NONE update boring 3<<EOF
+stdout
+$(odb)
+-v2*=Created directory "./lists"
+stderr
+*=./conf/updates:5:124: Ignoring all but first 18 entries...
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+*=Error: './lists/a_suitename_InRelease' only lists unusable or unrequested compressions of 'main/binary-abacus/Packages'.
+*=Try e.g the '--lunzip' option (or check what it is set to) to make more useable.
+*=Or change your DownloadListsAs to request e.g. '.gz'.
+-v0*=There have been errors!
+returns 255
+EOF
+
+cat > source1/dists/suitename/InRelease <<EOF
+Codename: hohoho
+Suite: suitename
+Architectures: coal abacus
+MD5Sum:
+ 00000000000000000000000000000000 0 main/binary-abacus/Packages.lz
+ 00000000000000000000000000000000 0 main/binary-coal/Packages.lz
+ 00000000000000000000000000000000 0 main/source/Sources.lz
+ 00000000000000000000000000000000 0 firmware/binary-abacus/Packages.lz
+ 00000000000000000000000000000000 0 firmware/binary-coal/Packages.lz
+ 00000000000000000000000000000000 0 firmware/source/Sources.lz
+EOF
+
+testrun - --lunzip=NONE update boring 3<<EOF
+stderr
+*=./conf/updates:5:124: Ignoring all but first 18 entries...
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+*=Error: './lists/a_suitename_InRelease' only lists unusable compressions of 'main/binary-abacus/Packages'.
+*=Try e.g the '--lunzip' option (or check what it is set to) to make more useable.
+-v0*=There have been errors!
+returns 255
+EOF
+
+sed -e 's/\.lz\>/.lzma/' -i  conf/updates
+
+cat > source1/dists/suitename/InRelease <<EOF
+Codename: hohoho
+Suite: suitename
+Architectures: coal abacus
+MD5Sum:
+ $(cd source1 ; md5releaseline suitename main/binary-abacus/Packages)
+ $(cd source1 ; md5releaseline suitename main/binary-coal/Packages)
+ $(cd source1 ; md5releaseline suitename main/source/Sources)
+ $(cd source1 ; md5releaseline suitename firmware/binary-abacus/Packages)
+ $(cd source1 ; md5releaseline suitename firmware/binary-coal/Packages)
+ $(cd source1 ; md5releaseline suitename firmware/source/Sources)
+EOF
+
+testrun - update boring 3<<EOF
+stderr
+*=./conf/updates:5:126: Ignoring all but first 18 entries...
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+*=Error: './lists/a_suitename_InRelease' only lists unrequested compressions of 'main/binary-abacus/Packages'.
+*=Try changing your DownloadListsAs to request e.g. '.'.
+-v0*=There have been errors!
+returns 255
+EOF
+
+ed -s conf/updates <<EOF
+g/.lzma .lzma .lzma .lzma/d
+w
+q
+EOF
+
+testrun - update boring 3<<EOF
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/Sources'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/source/Sources'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/binary-coal/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/Sources'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/source/Sources'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-coal/Packages'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Calculating packages to get...
+-v3*=  processing updates for 'boring|firmware|source'
+# 6 times:
+-v5*=  marking everything to be deleted
+-v3*=  processing updates for 'boring|firmware|coal'
+-v5*=  reading './lists/a_suitename_firmware_coal_Packages'
+-v3*=  processing updates for 'boring|firmware|abacus'
+-v5*=  reading './lists/a_suitename_firmware_abacus_Packages'
+-v3*=  processing updates for 'boring|main|source'
+-v5*=  reading './lists/b_x_Sources'
+-v5*=  reading './lists/a_suitename_main_Sources'
+-v3*=  processing updates for 'boring|main|coal'
+-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_coal_Packages'
+-v3*=  processing updates for 'boring|main|abacus'
+#-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_abacus_Packages'
+-v0*=Getting packages...
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./cc-addons_1-1000_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./dd-addons_2-0_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./cc_1-1000_abacus.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./dd_2-0_abacus.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./cc_1-1000.tar.gz'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/./cc_1-1000.dsc'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./cc-addons_1-1000_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./dd-addons_2-0_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./cc_1-1000_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./dd_2-0_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./cc_1-1000.tar.gz'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/./cc_1-1000.dsc'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa-addons_1-1000_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/bb-addons_2-0_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_1-1000_abacus.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/bb_2-0_abacus.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_1-1000.tar.gz'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_1-1000.dsc'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa-addons_1-1000_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/bb-addons_2-0_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_1-1000_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/bb_2-0_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_1-1000.tar.gz'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_1-1000.dsc'
+stdout
+-v2*=Created directory "./pool"
+-v2*=Created directory "./pool/firmware"
+-v2*=Created directory "./pool/firmware/b"
+-v2*=Created directory "./pool/firmware/b/bb"
+-v2*=Created directory "./pool/firmware/d"
+-v2*=Created directory "./pool/firmware/d/dd"
+-v2*=Created directory "./pool/main"
+-v2*=Created directory "./pool/main/c"
+-v2*=Created directory "./pool/main/c/cc"
+-v2*=Created directory "./pool/main/a"
+-v2*=Created directory "./pool/main/a/aa"
+$(ofa 'pool/firmware/d/dd/dd-addons_2-0_all.deb')
+$(ofa 'pool/firmware/d/dd/dd_2-0_abacus.deb')
+$(ofa 'pool/main/c/cc/cc-addons_1-1000_all.deb')
+$(ofa 'pool/main/c/cc/cc_1-1000_abacus.deb')
+$(ofa 'pool/main/c/cc/cc_1-1000.dsc')
+$(ofa 'pool/main/c/cc/cc_1-1000.tar.gz')
+$(ofa 'pool/firmware/b/bb/bb-addons_2-0_all.deb')
+$(ofa 'pool/firmware/b/bb/bb_2-0_abacus.deb')
+$(ofa 'pool/main/a/aa/aa-addons_1-1000_all.deb')
+$(ofa 'pool/main/a/aa/aa_1-1000_abacus.deb')
+$(ofa 'pool/main/a/aa/aa_1-1000.dsc')
+$(ofa 'pool/main/a/aa/aa_1-1000.tar.gz')
+-v1*=Shutting down aptmethods...
+-v0*=Installing (and possibly deleting) packages...
+$(opa 'dd-addons' x 'boring' 'firmware' 'coal' 'deb')
+$(opa 'dd' x 'boring' 'firmware' 'abacus' 'deb')
+$(opa 'dd-addons' x 'boring' 'firmware' 'abacus' 'deb')
+$(opa 'cc-addons' x 'boring' 'main' 'coal' 'deb')
+$(opa 'cc' x 'boring' 'main' 'source' 'dsc')
+$(opa 'cc' x 'boring' 'main' 'abacus' 'deb')
+$(opa 'cc-addons' x 'boring' 'main' 'abacus' 'deb')
+$(opa 'bb-addons' x 'boring' 'firmware' 'coal' 'deb')
+$(opa 'bb' x 'boring' 'firmware' 'abacus' 'deb')
+$(opa 'bb-addons' x 'boring' 'firmware' 'abacus' 'deb')
+$(opa 'aa-addons' x 'boring' 'main' 'coal' 'deb')
+$(opa 'aa' x 'boring' 'main' 'source' 'dsc')
+$(opa 'aa' x 'boring' 'main' 'abacus' 'deb')
+$(opa 'aa-addons' x 'boring' 'main' 'abacus' 'deb')
+EOF
+
+DISTRI=dummy PACKAGE=aa EPOCH="" VERSION=2 REVISION=-1 SECTION="base" genpackage.sh -sa
+DISTRI=dummy PACKAGE=bb EPOCH="" VERSION=1 REVISION=-1 SECTION="firmware/base" genpackage.sh -sa
+DISTRI=dummy PACKAGE=ee EPOCH="" VERSION=2 REVISION=-1 SECTION="firmware/base" genpackage.sh -sa
+
+rm source1/pool/firmware/bb*
+mv aa* source1/pool/main
+mv ee* bb* source1/pool/firmware
+
+cd source1
+dpkg-scansources pool/main /dev/null > dists/suitename/main/source/Sources
+dpkg-scanpackages pool/main /dev/null > dists/suitename/main/binary-abacus/Packages
+dpkg-scanpackages -a coal pool/main /dev/null > dists/suitename/main/binary-coal/Packages
+dpkg-scansources pool/firmware /dev/null > dists/suitename/firmware/source/Sources
+dpkg-scanpackages pool/firmware /dev/null > dists/suitename/firmware/binary-abacus/Packages
+dpkg-scanpackages -a coal pool/firmware /dev/null > dists/suitename/firmware/binary-coal/Packages
+cd ..
+
+cat > source1/dists/suitename/InRelease <<EOF
+Codename: hohoho
+Suite: suitename
+Architectures: coal abacus
+MD5Sum:
+ $(cd source1 ; md5releaseline suitename main/binary-abacus/Packages)
+ $(cd source1 ; md5releaseline suitename main/binary-coal/Packages)
+ $(cd source1 ; md5releaseline suitename main/source/Sources)
+ $(cd source1 ; md5releaseline suitename firmware/binary-abacus/Packages)
+ $(cd source1 ; md5releaseline suitename firmware/binary-coal/Packages)
+ $(cd source1 ; md5releaseline suitename firmware/source/Sources)
+EOF
+
+sed -e 's/Update: - 1/Update: 1/' -i conf/distributions
+ed -s conf/updates <<EOF
+1a
+FilterList: upgradeonly
+.
+w
+q
+EOF
+
+testrun - --keepunreferenced update boring 3<<EOF
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/source/Sources'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/main/binary-coal/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/source/Sources'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/main/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/firmware/binary-coal/Packages'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Calculating packages to get...
+-v4*=  nothing to do for 'boring|firmware|source'
+-v3*=  processing updates for 'boring|firmware|coal'
+-v5*=  reading './lists/a_suitename_firmware_coal_Packages'
+-v3*=  processing updates for 'boring|firmware|abacus'
+-v5*=  reading './lists/a_suitename_firmware_abacus_Packages'
+-v3*=  processing updates for 'boring|main|source'
+-v5*=  reading './lists/b_x_Sources'
+-v5*=  reading './lists/a_suitename_main_Sources'
+-v3*=  processing updates for 'boring|main|coal'
+-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_coal_Packages'
+-v3*=  processing updates for 'boring|main|abacus'
+#-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_abacus_Packages'
+-v0*=Getting packages...
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa-addons_2-1_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_2-1_abacus.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_2-1.tar.gz'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/main/aa_2-1.dsc'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa-addons_2-1_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_2-1_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_2-1.tar.gz'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/main/aa_2-1.dsc'
+stdout
+$(ofa 'pool/main/a/aa/aa-addons_2-1_all.deb')
+$(ofa 'pool/main/a/aa/aa_2-1_abacus.deb')
+$(ofa 'pool/main/a/aa/aa_2-1.dsc')
+$(ofa 'pool/main/a/aa/aa_2-1.tar.gz')
+-v1*=Shutting down aptmethods...
+-v0*=Installing (and possibly deleting) packages...
+$(opu 'aa-addons' x x 'boring' 'main' 'coal' 'deb')
+$(opu 'aa' x x 'boring' 'main' 'source' 'dsc')
+$(opu 'aa' x x 'boring' 'main' 'abacus' 'deb')
+$(opu 'aa-addons' x x 'boring' 'main' 'abacus' 'deb')
+-v1*=4 files lost their last reference.
+-v1*=(dumpunreferenced lists such files, use deleteunreferenced to delete them.)
+EOF
+
+#remove upgradeonly again, letting ee in
+ed -s conf/updates <<EOF
+%g/FilterList: upgradeonly/d
+w
+q
+EOF
+
+testrun - --keepunreferenced update boring 3<<EOF
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Nothing to do found. (Use --noskipold to force processing)
+EOF
+
+testrun - --nolistsdownload --keepunreferenced update boring 3<<EOF
+stderr
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Nothing to do found. (Use --noskipold to force processing)
+EOF
+
+testrun - --nolistsdownload --noskipold --keepunreferenced update boring 3<<EOF
+stderr
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Calculating packages to get...
+-v4*=  nothing to do for 'boring|firmware|source'
+-v3*=  processing updates for 'boring|firmware|coal'
+-v5*=  reading './lists/a_suitename_firmware_coal_Packages'
+-v3*=  processing updates for 'boring|firmware|abacus'
+-v5*=  reading './lists/a_suitename_firmware_abacus_Packages'
+-v3*=  processing updates for 'boring|main|source'
+-v5*=  reading './lists/b_x_Sources'
+-v5*=  reading './lists/a_suitename_main_Sources'
+-v3*=  processing updates for 'boring|main|coal'
+-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_coal_Packages'
+-v3*=  processing updates for 'boring|main|abacus'
+#-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_abacus_Packages'
+-v0*=Getting packages...
+-v2*=Created directory "./pool/firmware/e"
+-v2*=Created directory "./pool/firmware/e/ee"
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/ee-addons_2-1_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/ee_2-1_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/ee-addons_2-1_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/ee_2-1_abacus.deb'
+stdout
+$(ofa 'pool/firmware/e/ee/ee-addons_2-1_all.deb')
+$(ofa 'pool/firmware/e/ee/ee_2-1_abacus.deb')
+-v1*=Shutting down aptmethods...
+-v0*=Installing (and possibly deleting) packages...
+$(opa 'ee-addons' x 'boring' 'firmware' 'coal' 'deb')
+$(opa 'ee' x 'boring' 'firmware' 'abacus' 'deb')
+$(opa 'ee-addons' x 'boring' 'firmware' 'abacus' 'deb')
+EOF
+
+#  reinsert delete rule, this should cause a downgrade of bb
+sed -e 's/Update: 1/Update: - 1/' -i conf/distributions
+
+# changes to the clean rules causes automatic reprocessing, so new noskipold needed here
+
+testrun - --keepunreferenced update boring 3<<EOF
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/dists/suitename/InRelease'
+*=WARNING: No signature found in ./lists/a_suitename_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Calculating packages to get...
+-v3*=  processing updates for 'boring|firmware|source'
+# 6 times:
+-v5*=  marking everything to be deleted
+-v3*=  processing updates for 'boring|firmware|coal'
+-v5*=  reading './lists/a_suitename_firmware_coal_Packages'
+-v3*=  processing updates for 'boring|firmware|abacus'
+-v5*=  reading './lists/a_suitename_firmware_abacus_Packages'
+-v3*=  processing updates for 'boring|main|source'
+-v5*=  reading './lists/b_x_Sources'
+-v5*=  reading './lists/a_suitename_main_Sources'
+-v3*=  processing updates for 'boring|main|coal'
+-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_coal_Packages'
+-v3*=  processing updates for 'boring|main|abacus'
+#-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/a_suitename_main_abacus_Packages'
+-v0*=Getting packages...
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/bb-addons_1-1_all.deb'
+-v6*=aptmethod start 'copy:$WORKDIR/source1/pool/firmware/bb_1-1_abacus.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/bb-addons_1-1_all.deb'
+-v1*=aptmethod got 'copy:$WORKDIR/source1/pool/firmware/bb_1-1_abacus.deb'
+*=Warning: downgrading 'bb-addons' from '2-0' to '1-1' in 'boring|firmware|coal'!
+*=Warning: downgrading 'bb' from '2-0' to '1-1' in 'boring|firmware|abacus'!
+*=Warning: downgrading 'bb-addons' from '2-0' to '1-1' in 'boring|firmware|abacus'!
+stdout
+$(ofa 'pool/firmware/b/bb/bb-addons_1-1_all.deb')
+$(ofa 'pool/firmware/b/bb/bb_1-1_abacus.deb')
+-v1*=Shutting down aptmethods...
+-v0*=Installing (and possibly deleting) packages...
+$(opu 'bb-addons' x x 'boring' 'firmware' 'coal' 'deb')
+$(opu 'bb' x x 'boring' 'firmware' 'abacus' 'deb')
+$(opu 'bb-addons' x x 'boring' 'firmware' 'abacus' 'deb')
+stdout
+-v1*=2 files lost their last reference.
+-v1*=(dumpunreferenced lists such files, use deleteunreferenced to delete them.)
+EOF
+
+#Now it gets evil! Name flat and non-flat the same
+dodo sed -i -e 's/suitename/x/'  source1/dists/suitename/InRelease
+mv source1/dists/suitename source1/dists/x
+mv source1/dists source2/dists
+dodo sed -i -e 's/suitename/x/' -e 's/^From: a$/From: b/' -e 's/Flat: dummycomponent/#&/' conf/updates
+
+testrun - update boring 3<<EOF
+stderr
+-v0*=Warning: From the same remote repository 'copy:${WORKDIR}/source2', distribution 'x'
+-v0*=is requested both flat and non-flat. While this is possible
+-v0*=(having copy:${WORKDIR}/source2/dists/x and copy:${WORKDIR}/source2/x), it is unlikely.
+-v0*=To no longer see this message, use --ignore=flatandnonflat.
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/main/source/Sources'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/main/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/main/binary-coal/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/firmware/binary-abacus/Packages'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/firmware/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/main/source/Sources'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/main/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/main/binary-coal/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/firmware/binary-abacus/Packages'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/firmware/binary-coal/Packages'
+*=WARNING: No signature found in ./lists/b_x_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Calculating packages to get...
+-v0*=  nothing new for 'boring|firmware|source' (use --noskipold to process anyway)
+-v3*=  processing updates for 'boring|firmware|coal'
+# 5 times:
+-v5*=  marking everything to be deleted
+-v5*=  reading './lists/b_x_firmware_coal_Packages'
+-v3*=  processing updates for 'boring|firmware|abacus'
+-v5*=  reading './lists/b_x_firmware_abacus_Packages'
+-v3*=  processing updates for 'boring|main|source'
+-v5*=  reading './lists/b_x_Sources'
+-v5*=  reading './lists/b_x_main_Sources'
+-v3*=  processing updates for 'boring|main|coal'
+-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/b_x_main_coal_Packages'
+-v3*=  processing updates for 'boring|main|abacus'
+#-v5*=  reading './lists/b_x_Packages'
+-v5*=  reading './lists/b_x_main_abacus_Packages'
+stderr
+EOF
+
+testrun - --ignore=flatandnonflat update boring 3<<EOF
+stderr
+-v6*=aptmethod start 'copy:$WORKDIR/source2/x/InRelease'
+-v6*=aptmethod start 'copy:$WORKDIR/source2/dists/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/x/InRelease'
+-v1*=aptmethod got 'copy:$WORKDIR/source2/dists/x/InRelease'
+*=WARNING: No signature found in ./lists/b_x_InRelease, assuming it is unsigned!
+*=WARNING: No signature found in ./lists/b_x_flat_InRelease, assuming it is unsigned!
+stdout
+-v0*=Nothing to do found. (Use --noskipold to force processing)
+stderr
+EOF
+
+cat > results.expected <<EOF
+add boring deb firmware coal bb-addons 2-0 -- pool/firmware/b/bb/bb-addons_2-0_all.deb
+add boring deb firmware coal dd-addons 2-0 -- pool/firmware/d/dd/dd-addons_2-0_all.deb
+add boring deb firmware abacus bb 2-0 -- pool/firmware/b/bb/bb_2-0_abacus.deb
+add boring deb firmware abacus bb-addons 2-0 -- pool/firmware/b/bb/bb-addons_2-0_all.deb
+add boring deb firmware abacus dd 2-0 -- pool/firmware/d/dd/dd_2-0_abacus.deb
+add boring deb firmware abacus dd-addons 2-0 -- pool/firmware/d/dd/dd-addons_2-0_all.deb
+add boring dsc main source aa 1-1000 -- pool/main/a/aa/aa_1-1000.dsc pool/main/a/aa/aa_1-1000.tar.gz
+add boring dsc main source cc 1-1000 -- pool/main/c/cc/cc_1-1000.dsc pool/main/c/cc/cc_1-1000.tar.gz
+add boring deb main coal aa-addons 1-1000 -- pool/main/a/aa/aa-addons_1-1000_all.deb
+add boring deb main coal cc-addons 1-1000 -- pool/main/c/cc/cc-addons_1-1000_all.deb
+add boring deb main abacus aa 1-1000 -- pool/main/a/aa/aa_1-1000_abacus.deb
+add boring deb main abacus aa-addons 1-1000 -- pool/main/a/aa/aa-addons_1-1000_all.deb
+add boring deb main abacus cc 1-1000 -- pool/main/c/cc/cc_1-1000_abacus.deb
+add boring deb main abacus cc-addons 1-1000 -- pool/main/c/cc/cc-addons_1-1000_all.deb
+replace boring dsc main source aa 2-1 1-1000 -- pool/main/a/aa/aa_2-1.dsc pool/main/a/aa/aa_2-1.tar.gz -- pool/main/a/aa/aa_1-1000.dsc pool/main/a/aa/aa_1-1000.tar.gz
+replace boring deb main coal aa-addons 2-1 1-1000 -- pool/main/a/aa/aa-addons_2-1_all.deb -- pool/main/a/aa/aa-addons_1-1000_all.deb
+replace boring deb main abacus aa 2-1 1-1000 -- pool/main/a/aa/aa_2-1_abacus.deb -- pool/main/a/aa/aa_1-1000_abacus.deb
+replace boring deb main abacus aa-addons 2-1 1-1000 -- pool/main/a/aa/aa-addons_2-1_all.deb -- pool/main/a/aa/aa-addons_1-1000_all.deb
+add boring deb firmware coal ee-addons 2-1 -- pool/firmware/e/ee/ee-addons_2-1_all.deb
+add boring deb firmware abacus ee 2-1 -- pool/firmware/e/ee/ee_2-1_abacus.deb
+add boring deb firmware abacus ee-addons 2-1 -- pool/firmware/e/ee/ee-addons_2-1_all.deb
+replace boring deb firmware coal bb-addons 1-1 2-0 -- pool/firmware/b/bb/bb-addons_1-1_all.deb -- pool/firmware/b/bb/bb-addons_2-0_all.deb
+replace boring deb firmware abacus bb 1-1 2-0 -- pool/firmware/b/bb/bb_1-1_abacus.deb -- pool/firmware/b/bb/bb_2-0_abacus.deb
+replace boring deb firmware abacus bb-addons 1-1 2-0 -- pool/firmware/b/bb/bb-addons_1-1_all.deb -- pool/firmware/b/bb/bb-addons_2-0_all.deb
+EOF
+
+dodo test ! -f shouldnothappen
+dodiff results.expected updatelog
+rm updatelog results.expected
+rm -r -f db conf dists pool lists source1 source2 test.changes
+testsuccess
