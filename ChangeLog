@@ -1,3 +1,21 @@
+2024-02-17  Bastian Germann <bage@debian.org>
+
+	* configure.ac, NEWS: Release version 5.4.4
+
+2024-02-05  Sylvestre Ledru <sylvestre@debian.org>
+
+	* docs: Fix some typos
+	* reprepro.1: add missing single quotes
+
+2024-01-08  Bastian Germann <bage@debian.org>
+
+	* uncompression.c: Wait for poll event.
+	Revert "uncompress: prevent reprepro from hanging on unzstd"
+
+2024-01-07  Bastian Germann <bage@debian.org>
+
+	* configure.ac, NEWS: Release version 5.4.3
+
 2023-03-01  Bastian Germann <bage@debian.org>
 
 	* configure.ac, NEWS: Release version 5.4.2

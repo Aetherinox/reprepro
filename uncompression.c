@@ -1430,7 +1430,7 @@ static inline retvalue drain_pipe_fd(struct compressedfile *file, int *errno_p, 
 		0
 	};
 	unsigned char buffer[4096] = {};
-	while ((e = poll(&pollfd, 1, 0)) > 0) {
+	while ((e = poll(&pollfd, 1, -1)) > 0) {
 		e = read(file->fd, buffer, 4096);
 		if (e <= 0)
 			break;

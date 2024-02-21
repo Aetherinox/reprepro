@@ -888,7 +888,7 @@ Each distribution to receive packages from other repositories needs an
 <tt class="field">Update:</tt> field listing the update rules applied to it.
 Those update rules are listed in <tt class="file">conf/updates</tt>.
 There is also the magic <tt>-</tt> update rule, which tells reprepro to delete
-all packages not readded by later rules.
+all packages not re-added by later rules.
 <br>
 To make reprepro to update all distributions call <tt>reprepro update</tt>
 without further arguments, or give the distributions to update as additional
@@ -1147,7 +1147,7 @@ And of course all the <tt class="env">REPREPRO_*_DIR</tt> variables are set.
 <h5>Calling conventions for <tt class="suffix">.changes</tt> scripts</h5>
 This type of script is called with 5 or 6 arguments.
 The first is always &quot;<tt>accepted</tt>&quot;, to make it easier to
-check it is configued the right way.
+check it is configured the right way.
 The second argument is the codename of the distribution the
 <tt class="suffix">.changes</tt>-file was added to.
 The third argument is the source name, the forth the version.
@@ -1246,15 +1246,15 @@ two arguments: the directory of the distribution (relative to out dir), the name
 
 All <tt class="constant">POOLNEW</tt> come before any distribution changes referencing them
 and all <tt class="constant">POOLDELETE</tt> will be afterwards.
-Each line beloging to a distribution is guaranteed to be between the corresponding
+Each line belonging to a distribution is guaranteed to be between the corresponding
 <tt class="constant">START-DISTRIBUTION</tt> and
 <tt class="constant">END-DISTRIBUTION</tt> or between a
 <tt class="constant">START-SNAPSHOT</tt> and
 <tt class="constant">END-SNAPSHOT</tt> or between a
 with the same directory
-(i.e. there is some redundancy so you can choose to parse the information where it is more conventient for you).
+(i.e. there is some redundancy so you can choose to parse the information where it is more convenient for you).
 
-The lines starting with <tt class="constant">DIST</tt> describe new or modified files in the distribution description exported by reprepro. No hint is given if that file was previously non-existant, a proper file or a symlink (i.e. if you copy stuff, do not make any assumptions about that).
+The lines starting with <tt class="constant">DIST</tt> describe new or modified files in the distribution description exported by reprepro. No hint is given if that file was previously non-existent, a proper file or a symlink (i.e. if you copy stuff, do not make any assumptions about that).
 Future versions of reprepro might create <tt class="constant">DISTKEEP</tt> lines to denote files that have not changed (i.e. just ignore those lines to be future-proof).
 
 The directories for the distribution entries are what apt expects them (i.e. always starting with <tt class="constant">dists/</tt>, while the third argument to <tt class="constant">DISTFILE</tt> is the name reprepro generated (i.e. starts with the distdir value, which can be configured to not end with <tt class="constant">dists/</tt>).
@@ -1427,7 +1427,7 @@ or to read <tt class="suffix">.dsc</tt> and <tt class="suffix">.changes</tt>
 files (even when there is no key to look for specified,
 as that is the best way to get the data from the signed block).
 Avoiding this by just accepting stuff without looking for signatures on
-untrusted data is not really an option, so I know nothing to prefent this
+untrusted data is not really an option, so I know nothing to prevent this
 type of problems.
 </dd>
 <dt>libarchive</dt><dd>
