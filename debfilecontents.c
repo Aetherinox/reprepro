@@ -137,8 +137,10 @@ static retvalue read_data_tar(/*@out@*/char **list, /*@out@*/size_t *size, const
 retvalue getfilelist(/*@out@*/char **filelist, size_t *size, const char *debfile) {
 	struct ar_archive *ar;
 	retvalue r;
-	bool hadcandidate = false;
-
+	bool hadcandidate;
+	bool uncompressedretry = false;
+	retrylabel:
+	hadcandidate = false;
 	r = ar_open(&ar, debfile);
 	if (RET_WAS_ERROR(r))
 		return r;
@@ -163,6 +165,7 @@ retvalue getfilelist(/*@out@*/char **filelist, size_t *size, const char *debfile
 				free(filename);
 				continue;
 			}
+			if (uncompressedretry) c = c_none;
 			ar_archivemember_setcompression(ar, c);
 			if (uncompression_supported(c)) {
 				struct archive *tar;
@@ -194,7 +197,13 @@ retvalue getfilelist(/*@out@*/char **filelist, size_t *size, const char *debfile
 				if (r != RET_NOTHING) {
 					ar_close(ar);
 					free(filename);
-					return r;
+					if ((r == RET_ERROR) && (!uncompressedretry)) {
+						uncompressedretry = true;
+						fprintf(stderr,"retrying uncompressed\n");
+						goto retrylabel;
+					} else {
+						return r;
+					}
 				}
 
 			}

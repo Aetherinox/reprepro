@@ -1573,7 +1573,7 @@ retvalue release_prepare(struct release *release, struct distribution *distribut
 	enum checksumtype cs;
 	int i;
 	static const char * const release_checksum_headers[cs_hashCOUNT] =
-		{ "MD5Sum:\n", "SHA1:\n", "SHA256:\n" };
+		{ "MD5Sum:\n", "SHA1:\n", "SHA256:\n", "SHA512:\n" };
 	struct release_entry *plainentry, *signedentry, *detachedentry;
 
 	// TODO: check for existence of Release file here first?

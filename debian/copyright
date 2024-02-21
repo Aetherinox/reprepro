@@ -35,6 +35,10 @@ Files: docs/di.example/*
 Copyright: Goswin Brederlow <brederlo@informatik.uni-tuebingen.de>
 License: GPL-2
 
+Files: docs/mail-changes.example
+Copyright: 2016 Luca Capello <luca.capello@infomaniak.com>
+License: GPL-2
+
 Files: docs/pdiff.example
 Copyright: (C) 2004-5  Anthony Towns <aj@azure.humbug.org.au>
            (C) 2004-5  Andreas Barth <aba@not.so.argh.org>

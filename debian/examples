@@ -7,3 +7,4 @@ docs/copybyhand.example
 docs/outstore.py
 docs/sftp.py
 docs/outsftphook.py
+docs/mail-changes.example

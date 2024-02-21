@@ -1422,12 +1422,34 @@ int uncompress_read(struct compressedfile *file, void *buffer, int size) {
 	}
 }
 
+static inline retvalue drain_pipe_fd(struct compressedfile *file, int *errno_p, const char **msg_p) {
+	int e = 0;
+	struct pollfd pollfd = {
+		file->fd,
+		POLLIN,
+		0
+	};
+	unsigned char buffer[4096] = {};
+	while ((e = poll(&pollfd, 1, -1)) > 0) {
+		e = read(file->fd, buffer, 4096);
+		if (e <= 0)
+			break;
+	}
+	if (e < 0) {
+		*errno_p = e;
+		*msg_p = strerror(file->error);
+		return RET_ERRNO(e);
+	}
+	return RET_OK;
+}
+
 static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p, const char **msg_p) {
 	retvalue result;
 	int ret;
 	int e;
 	pid_t pid;
 	int status;
+	int output_fd;
 #define ERRORBUFFERSIZE 100
 	static char errorbuffer[ERRORBUFFERSIZE];
 
@@ -1436,15 +1458,19 @@ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p
 
 	if (file->external) {
 		free(file->intermediate.buffer);
-		(void)close(file->fd);
 		if (file->pipeinfd != -1)
 			(void)close(file->pipeinfd);
+		// Drain the child's stdout in the unlikely case it's blocking on it
+		e = drain_pipe_fd(file, errno_p, msg_p);
+		if (e != RET_OK)
+			return e;
+		output_fd = file->fd;
 		file->fd = file->infd;
-		file->infd = -1;
 		result = RET_OK;
-		if (file->pid <= 0)
+		if (file->pid <= 0) {
+			(void)close(output_fd);
 			return RET_OK;
-		pid = -1;
+		}
 		do {
 			if (interrupted()) {
 				*errno_p = EINTR;
@@ -1454,6 +1480,7 @@ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p
 			pid = waitpid(file->pid, &status, 0);
 			e = errno;
 		} while (pid == -1 && (e == EINTR || e == EAGAIN));
+		(void)close(output_fd);
 		if (pid == -1) {
 			*errno_p = e;
 			*msg_p = strerror(file->error);

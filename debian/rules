@@ -14,9 +14,6 @@ endif
 %:
 	dh $@
 
-override_dh_autoreconf:
-	autoreconf -i
-
 override_dh_auto_configure:
 	dh_auto_configure -- --with-libbz2 --with-liblzma --with-libgpgme $(ARCHIVEFLAGS)
 

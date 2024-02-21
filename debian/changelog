@@ -1,3 +1,41 @@
+reprepro (5.4.4-1) experimental; urgency=medium
+
+  * Import new upstream version 5.4.4
+  * Replace transitional Suggests gnupg-agent
+  * Revert "uncompress: prevent reprepro from hanging on unzstd"
+  * Wait for poll event
+
+  [ Sylvestre Ledru ]
+  * docs: Fix some typos
+  * reprepro.1: add missing single quotes
+
+ -- Bastian Germann <bage@debian.org>  Sat, 17 Feb 2024 13:58:44 +0000
+
+reprepro (5.4.3-1) experimental; urgency=medium
+
+  * Drop manual autoreconf (Closes: #1045567)
+  * uncompress: prevent reprepro from hanging on unzstd (Closes: #1056380)
+  * Adapt to shunit2 being Multi-Arch: foreign
+
+ -- Bastian Germann <bage@debian.org>  Sun, 07 Jan 2024 21:17:35 +0000
+
+reprepro (5.4.2-1) experimental; urgency=medium
+
+  * Import new upstream version 5.4.2 (LP: #2008508)
+  * db-util is Multi-Arch: foreign now
+
+ -- Bastian Germann <bage@debian.org>  Thu, 02 Mar 2023 15:03:30 +0100
+
+reprepro (5.4.1-1) experimental; urgency=medium
+
+  * Install native build-deps for arch:all
+  * Import new upstream version 5.4.1 (Closes: #697630, #863061, #1006766)
+
+  [ Luca Capello ]
+  * d/examples: Add mail-changes.example (Closes: #827816)
+
+ -- Bastian Germann <bage@debian.org>  Wed, 17 Aug 2022 17:43:04 +0200
+
 reprepro (5.4.0-1) experimental; urgency=medium
 
   * Import new upstream version 5.4.0
