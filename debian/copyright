@@ -121,6 +121,16 @@ License: public-domain
  Released into the Public Domain by Ulrich Drepper <drepper@redhat.com>.
  Neglegible modifications by Bernhard R. Link, also in the public domain.
 
+Files: sha512.c
+Copyright: Ulrich Drepper <drepper@redhat.com>
+           Bernhard R. Link
+License: public-domain
+ sha512 implementation, taken (with minor modification) from sha512crypt.c,
+ which states:
+ Released into the Public Domain by Ulrich Drepper <drepper@redhat.com>.
+ Neglegible modifications by Bastian Germann which stem from reprepro's
+ sha256.c by Bernhard R. Link, also in the public domain.
+
 Files: tests/basic.sh
  tests/multiversion.sh
  tests/shunit2-helper-functions.sh

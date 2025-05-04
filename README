@@ -21,7 +21,7 @@
 
 	architecture: The term like "sparc","i386","mips",...
 	component: Things like "main" "non-free" "contrib" ...
-		   (somtimes also called sections)
+		   (sometimes also called sections)
 	section: Things like "base" "interpreters" "oldlibs"
 		   (sometimes also called subsections)
 	type: The kind of packages, currently supported:
@@ -47,14 +47,14 @@
  	This makes no real mirror of the distribution, but
 	only of it contents. Thus the Index-files will
 	be different. (And thus no longer can be verified
-	by the offical signatures). This means people using
+	by the official signatures). This means people using
 	this mirror have to trust you to not include anything
 	ugly, as they can only check your signature directly.
 	(Or in other words: not useful for mirroring things
 	 to be used by strangers).
  - location:
  	The directory layout under pool/ is only divided
-	by the component and the sourcename. Ecspecially
+	by the component and the sourcename. Especially
 	woody and updates/woody will share the same space,
 	thus avoiding multiple instances of the same file.
 	(Can also cause trouble in the rare cases, when both
@@ -71,7 +71,7 @@
 	Note that other than apt-ftparchive case is most likely
 	to be significant. (Having the wrong case in might also
 	cause havoc in apt-ftparchive, as that changes the case of
-	the fieldname, which might confuse other programms...)
+	the fieldname, which might confuse other programs...)
 
 * Things that might be interesting to know:
 
