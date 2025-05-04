@@ -254,6 +254,7 @@ commands=(
 	tidytracks:"look for files referened by tracks but no longer needed"
 	translatefilelists:"translate pre-3.0.0 contents.cache.db into new format"
 	translatelegacychecksums:"get rid of obsolete files.db"
+	translatelegacyreferences:"translate pre-5.4.0 references.db into new format"
 	unreferencesnapshot:"no longer mark files used by an snapshot"
 	unusedsources:"list source packages with no binary packages"
 	update:"update from external source"

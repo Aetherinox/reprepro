@@ -338,6 +338,7 @@ _reprepro()
 			tidytracks\
 			translatefilelists\
 			translatelegacychecksums\
+			translatelegacyreferences\
 			unusedsources\
 			update'
 		hiddencommands='__d\
