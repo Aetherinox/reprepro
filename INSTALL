@@ -2,11 +2,11 @@ Build-Dependencies:
 	libdb3, libdb4.x or libdb5.x
 	libz
 Optional Dependencies:
-	libgpgme >= 0.4.1 (In Debian libgpgme11-dev, NOT libgpgme-dev)
+	libgpgme >= 0.4.1
 	libbz2
 	libarchive
 When Building from git:
-	autoconf2.50 (autoconf 2.13 will not work)
+	autoconf >= 2.50
 
 Basic Installation
 ==================

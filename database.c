@@ -145,7 +145,7 @@ static retvalue database_lock(size_t waitforlock) {
 			if (tries < waitforlock && ! interrupted()) {
 				unsigned int timetosleep = 10;
 				if (verbose >= 0)
-					printf(
+					fprintf(stderr,
 "Could not acquire lock: %s already exists!\nWaiting 10 seconds before trying again.\n",
 						lockfile);
 				while (timetosleep > 0)
@@ -1949,6 +1949,8 @@ static retvalue database_table(const char *filename, const char *subtable, enum 
 
 retvalue database_openreferences(void) {
 	retvalue r;
+	uint32_t flags;
+	int dbret;
 
 	assert (rdb_references == NULL);
 	r = database_table("references.db", "references",
@@ -1959,6 +1961,17 @@ retvalue database_openreferences(void) {
 		return r;
 	} else
 		rdb_references->verbose = false;
+	dbret = rdb_references->berkeleydb->get_flags(rdb_references->berkeleydb, &flags);
+	if (dbret != 0) {
+			table_printerror(rdb_references, dbret, "get_flags");
+			return RET_DBERR(dbret);
+		}
+	if (ISSET(flags, DB_DUPSORT)) {
+		fprintf(stderr,
+"Error: database uses deprecated format.\n"
+"Please run translatelegacyreferences to update to the new format first.\n");
+		return RET_ERROR;
+		}
 	return RET_OK;
 }
 
@@ -2061,7 +2074,6 @@ static retvalue database_translate_legacy_packages(void) {
 	const char *chunk, *packagename;
 	char *identifier, *key, *legacy_filename, *packages_filename, *packageversion;
 	retvalue r, result;
-	int ret, e;
 	size_t chunk_len;
 	DBT Key, Data;
 
@@ -2072,19 +2084,15 @@ static retvalue database_translate_legacy_packages(void) {
 		fprintf(stderr, "Cannot find directory '%s'!\n", global.dbdir);
 		return RET_ERROR;
 	}
-
 	packages_filename = dbfilename("packages.db");
 	legacy_filename = dbfilename("packages.legacy.db");
-	ret = rename(packages_filename, legacy_filename);
-	if (ret != 0) {
-		e = errno;
-		fprintf(stderr, "error %d renaming %s to %s: %s\n",
-				e, packages_filename, legacy_filename, strerror(e));
-		return (e != 0)?e:EINVAL;
+	r = rdb_env->dbrename(rdb_env, NULL, "packages.db", NULL, "packages.legacy.db", 0);
+	if (r != 0) {
+		fprintf(stderr, "Error: DB_ENV->dbrename: %s\n", db_strerror(r));
+		return r;
 	}
 	if (verbose >= 15)
 		fprintf(stderr, "trace: Moved '%s' to '%s'.\n", packages_filename, legacy_filename);
-
 	r = database_table("packages.legacy.db", NULL, dbt_BTREE, DB_RDONLY, &legacy_databases);
 	assert (r != RET_NOTHING);
 	if (RET_WAS_ERROR(r))
@@ -2167,12 +2175,12 @@ static retvalue database_translate_legacy_packages(void) {
 	RET_ENDUPDATE(result, r);
 
 	if (RET_IS_OK(result)) {
-		e = deletefile(legacy_filename);
-		if (e != 0) {
+		r = rdb_env->dbremove(rdb_env, NULL, "packages.legacy.db", NULL, 0);
+		if (r != 0) {
 			fprintf(stderr, "Could not delete '%s'!\n"
 "It can now safely be deleted and it all that is left to be done!\n",
 					legacy_filename);
-			return RET_ERRNO(e);
+			return r;
 		}
 	}
 
@@ -2706,4 +2714,92 @@ retvalue database_translate_legacy_checksums(bool verbosedb) {
 	releaselock();
 	database_free();
 	return r;
+}
+
+static retvalue table_copy_with_dup(struct table *oldtable, struct table *newtable) {
+	retvalue r;
+	struct cursor *cursor;
+	const char *filekey, *data;
+	size_t data_len;
+
+	r = table_newglobalcursor(oldtable, true, &cursor);
+	if (!RET_IS_OK(r))
+		return r;
+	while (cursor_nexttempdata(oldtable, cursor, &filekey,
+				&data, &data_len)) {
+		r = table_addrecord(newtable, filekey,
+				data, data_len, false);
+		if (RET_WAS_ERROR(r))
+			return r;
+	}
+	return RET_OK;
+}
+
+retvalue database_translate_legacy_references(void) {
+	char *dbname, *tmpdbname;
+	struct table *oldtable, *newtable;
+	int ret;
+	retvalue r, r2;
+
+	dbname = dbfilename("references.db");
+	if (FAILEDTOALLOC(dbname))
+		return RET_ERROR_OOM;
+	tmpdbname = dbfilename("old.references.db");
+	if (FAILEDTOALLOC(tmpdbname)) {
+		free(dbname);
+		return RET_ERROR_OOM;
+	}
+	ret = rename(dbname, tmpdbname);
+	if (ret != 0) {
+		int e = errno;
+		fprintf(stderr, "Could not rename '%s' into '%s': %s(%d)\n",
+				dbname, tmpdbname, strerror(e), e);
+		free(dbname);
+		free(tmpdbname);
+		return RET_ERRNO(e);
+	}
+	newtable = NULL;
+	r = database_table("references.db", "references",
+			dbt_BTREEDUP, DB_CREATE, &newtable);
+	assert (r != RET_NOTHING);
+	oldtable = NULL;
+	if (RET_IS_OK(r)) {
+		r = database_table("old.references.db", "references",
+				dbt_BTREEDUP, DB_RDONLY, &oldtable);
+		if (r == RET_NOTHING) {
+			fprintf(stderr, "Could not find old-style database!\n");
+			r = RET_ERROR;
+		}
+	}
+	if (RET_IS_OK(r)) {
+		r = table_copy_with_dup(oldtable, newtable);
+		r2 = table_close(oldtable);
+		RET_ENDUPDATE(r, r2);
+		if (r == RET_NOTHING) {
+			r = RET_OK;
+		}
+	}
+	r2 = table_close(newtable);
+	RET_ENDUPDATE(r, r2);
+	if (RET_IS_OK(r))
+		(void)unlink(tmpdbname);
+
+	if (RET_WAS_ERROR(r)) {
+		ret = rename(tmpdbname, dbname);
+		if (ret != 0) {
+			int e = errno;
+			fprintf(stderr,
+"Could not rename '%s' back into '%s': %s(%d)\n",
+					dbname, tmpdbname, strerror(e), e);
+			free(tmpdbname);
+			free(dbname);
+			return RET_ERRNO(e);
+		}
+		free(tmpdbname);
+		free(dbname);
+		return r;
+	}
+	free(tmpdbname);
+	free(dbname);
+	return RET_OK;
 }
