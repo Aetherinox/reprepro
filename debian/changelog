@@ -1,3 +1,44 @@
+reprepro (5.4.6-3) unstable; urgency=medium
+
+  * Add B-D apt (Closes: #1099204)
+
+ -- Bastian Germann <bage@debian.org>  Mon, 03 Mar 2025 16:04:47 +0100
+
+reprepro (5.4.6-2) unstable; urgency=medium
+
+  * Move to unstable (Closes: #1068505)
+  * d/copyright: Add filecntl.c info
+
+ -- Bastian Germann <bage@debian.org>  Fri, 31 Jan 2025 12:44:44 +0100
+
+reprepro (5.4.6-1) experimental; urgency=medium
+
+  * Import new upstream version 5.4.6
+  * INSTALL: Dependency version requirements
+  * Drop build option reprepro-nolibarchive
+  * d/copyright: Note sha512 is in the public domain
+
+  [ Giorgio Comitini ]
+  * Implement command translatelegacyreferences (Closes: #1051537)
+
+  [ Felix Yan ]
+  * reprepro.1: Correct a typo
+
+ -- Bastian Germann <bage@debian.org>  Thu, 19 Dec 2024 00:05:06 +0000
+
+reprepro (5.4.5-1) experimental; urgency=medium
+
+  * Import new upstream version 5.4.5
+
+  [ Simon Richter ]
+  * Print complains about lockfile on stderr (Closes: #1071195)
+
+  [ Serge Schneider ]
+  * database.c: Use DB_ENV->dbrename() and DB_ENV->dbremove() in
+    database_translate_legacy_packages (Closes: #1017983)
+
+ -- Bastian Germann <bage@debian.org>  Sat, 03 Aug 2024 15:36:04 +0000
+
 reprepro (5.4.4-1) experimental; urgency=medium
 
   * Import new upstream version 5.4.4

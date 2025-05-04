@@ -538,6 +538,9 @@ ACTION_N(n, n, n, translatelegacychecksums) {
 			verbosedatabase || verbose > 10);
 }
 
+ACTION_T(n, n, translatelegacyreferences) {
+	return database_translate_legacy_references();
+}
 
 ACTION_F(n, n, n, n, addmd5sums) {
 	char buffer[2000], *c, *m;
@@ -4135,6 +4138,8 @@ static const struct action {
 		0, 0, "translatefilelists"},
 	{"translatelegacychecksums",	A_N(translatelegacychecksums),
 		0, 0, "translatelegacychecksums"},
+	{"translatelegacyreferences",	A__T(translatelegacyreferences),
+		0, 0, "translatelegacyreferences"},
 	{"_listconfidentifiers",	A_C(listconfidentifiers),
 		0, -1, "_listconfidentifiers"},
 	{"_listdbidentifiers",	A_ROB(listdbidentifiers)|MAY_UNUSED,

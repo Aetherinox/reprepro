@@ -1041,6 +1041,15 @@ Make sure you have at least half of the space of the current
 .IB db /contents.cache.db
 file size available in that partition.
 .TP
+.B translatelegacyreferences
+Translate the references within
+.IB db /references.db
+into the new format used since reprepro 5.4.0.
+
+Make sure you have at least the same space of the current
+.IB db /references.db
+file size available in that partition.
+.TP
 .B flood \fIdistribution\fP \fR[\fP\fIarchitecture\fP\fR]\fP
 For each architecture of \fIdistribution\fP (or for the one specified)
 add architecture \fBall\fP packages from other architectures
@@ -1202,7 +1211,7 @@ on the database compatibility version, will include all those if reprepro
 was run since the config was last changed.
 
 .SH "CONFIG FILES"
-.B reprepo
+.B reprepro
 uses three config files, which are searched in
 the directory specified with
 .B \-\-confdir
