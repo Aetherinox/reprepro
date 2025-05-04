@@ -1,16 +1,3 @@
-reprepro (5.4.4-1) experimental; urgency=medium
-
-  * Import new upstream version 5.4.4
-  * Replace transitional Suggests gnupg-agent
-  * Revert "uncompress: prevent reprepro from hanging on unzstd"
-  * Wait for poll event
-
-  [ Sylvestre Ledru ]
-  * docs: Fix some typos
-  * reprepro.1: add missing single quotes
-
- -- Bastian Germann <bage@debian.org>  Sat, 17 Feb 2024 13:58:44 +0000
-
 reprepro (5.4.3-1) experimental; urgency=medium
 
   * Drop manual autoreconf (Closes: #1045567)

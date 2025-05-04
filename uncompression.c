@@ -1430,7 +1430,10 @@ static inline retvalue drain_pipe_fd(struct compressedfile *file, int *errno_p, 
 		0
 	};
 	unsigned char buffer[4096] = {};
-	while ((e = poll(&pollfd, 1, -1)) > 0) {
+	while ((e = poll(&pollfd, 1, 0)) >= 0) {
+		if (pollfd.revents & POLLERR || pollfd.revents & POLLHUP)
+			return RET_ERRNO(file->error);
+
 		e = read(file->fd, buffer, 4096);
 		if (e <= 0)
 			break;
@@ -1460,11 +1463,13 @@ static retvalue uncompress_commonclose(struct compressedfile *file, int *errno_p
 		free(file->intermediate.buffer);
 		if (file->pipeinfd != -1)
 			(void)close(file->pipeinfd);
+		output_fd = file->fd;
 		// Drain the child's stdout in the unlikely case it's blocking on it
 		e = drain_pipe_fd(file, errno_p, msg_p);
-		if (e != RET_OK)
+		if (e != RET_OK) {
+			(void)close(output_fd);
 			return e;
-		output_fd = file->fd;
+		}
 		file->fd = file->infd;
 		result = RET_OK;
 		if (file->pid <= 0) {
