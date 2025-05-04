@@ -1,3 +1,24 @@
+Updates between 5.4.6 and 5.4.7:
+- No functional updates, only fix manpage wording
+
+Updates between 5.4.5 and 5.4.6:
+- Implement command translatelegacyreferences (https://bugs.debian.org/1051537):
+  reprepro did not automatically migrate the database if needed after version
+  upgrades. Instead, it raised an error and asked the user to call one of the
+  translate* commands. Add one more such commands. It works as follows:
+  * When an attempt is made to open the references.db file, reprepro
+    checks if the DUPSORT flag is set. If this is so, the database
+    needs to be upgraded, so reprepro exits with an error asking the
+    user to call the new 'translatelegacyreferences' command.
+  * The translatelegacyreferences command creates a new references.db
+    file with the DUP flag in place of DUPSORT. It then copies the
+    content of the old references.db file into the new one.
+
+Updates between 5.4.4 and 5.4.5:
+- Use DB_ENV->dbrename() and DB_ENV->dbremove() in
+  database_translate_legacy_packages (https://bugs.debian.org/1017983)
+- Print complains about lockfile on stderr (https://bugs.debian.org/1071195)
+
 Updates between 5.4.3 and 5.4.4:
 - Revert "uncompress: prevent reprepro from hanging on unzstd"
 - Wait for poll event

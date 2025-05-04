@@ -303,6 +303,7 @@ test_database_upgrade() {
 	# Test case for https://github.com/profitbricks/reprepro/issues/8
 	rm -rf "$REPO"
 	cp -r "${0%/*}/old-database" "$REPO"
+	call $REPREPRO $VERBOSE_ARGS -b $REPO translatelegacyreferences
 	call $REPREPRO $VERBOSE_ARGS -b $REPO export
 	assertEquals "\
 bullseye|main|amd64
