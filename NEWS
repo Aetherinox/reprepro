@@ -1,3 +1,8 @@
+Updates between 5.4.4 and 5.4.5:
+- Use DB_ENV->dbrename() and DB_ENV->dbremove() in
+  database_translate_legacy_packages (https://bugs.debian.org/1017983)
+- Print complains about lockfile on stderr (https://bugs.debian.org/1071195)
+
 Updates between 5.4.3 and 5.4.4:
 - Revert "uncompress: prevent reprepro from hanging on unzstd"
 - Wait for poll event

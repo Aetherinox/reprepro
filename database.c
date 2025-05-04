@@ -145,7 +145,7 @@ static retvalue database_lock(size_t waitforlock) {
 			if (tries < waitforlock && ! interrupted()) {
 				unsigned int timetosleep = 10;
 				if (verbose >= 0)
-					printf(
+					fprintf(stderr,
 "Could not acquire lock: %s already exists!\nWaiting 10 seconds before trying again.\n",
 						lockfile);
 				while (timetosleep > 0)
@@ -2061,7 +2061,6 @@ static retvalue database_translate_legacy_packages(void) {
 	const char *chunk, *packagename;
 	char *identifier, *key, *legacy_filename, *packages_filename, *packageversion;
 	retvalue r, result;
-	int ret, e;
 	size_t chunk_len;
 	DBT Key, Data;
 
@@ -2072,19 +2071,15 @@ static retvalue database_translate_legacy_packages(void) {
 		fprintf(stderr, "Cannot find directory '%s'!\n", global.dbdir);
 		return RET_ERROR;
 	}
-
 	packages_filename = dbfilename("packages.db");
 	legacy_filename = dbfilename("packages.legacy.db");
-	ret = rename(packages_filename, legacy_filename);
-	if (ret != 0) {
-		e = errno;
-		fprintf(stderr, "error %d renaming %s to %s: %s\n",
-				e, packages_filename, legacy_filename, strerror(e));
-		return (e != 0)?e:EINVAL;
+	r = rdb_env->dbrename(rdb_env, NULL, "packages.db", NULL, "packages.legacy.db", 0);
+	if (r != 0) {
+		fprintf(stderr, "Error: DB_ENV->dbrename: %s\n", db_strerror(r));
+		return r;
 	}
 	if (verbose >= 15)
 		fprintf(stderr, "trace: Moved '%s' to '%s'.\n", packages_filename, legacy_filename);
-
 	r = database_table("packages.legacy.db", NULL, dbt_BTREE, DB_RDONLY, &legacy_databases);
 	assert (r != RET_NOTHING);
 	if (RET_WAS_ERROR(r))
@@ -2167,12 +2162,12 @@ static retvalue database_translate_legacy_packages(void) {
 	RET_ENDUPDATE(result, r);
 
 	if (RET_IS_OK(result)) {
-		e = deletefile(legacy_filename);
-		if (e != 0) {
+		r = rdb_env->dbremove(rdb_env, NULL, "packages.legacy.db", NULL, 0);
+		if (r != 0) {
 			fprintf(stderr, "Could not delete '%s'!\n"
 "It can now safely be deleted and it all that is left to be done!\n",
 					legacy_filename);
-			return RET_ERRNO(e);
+			return r;
 		}
 	}
 

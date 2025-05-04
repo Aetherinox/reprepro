@@ -1,3 +1,18 @@
+2024-08-03  Bastian Germann <bage@debian.org>
+
+	* configure.ac, NEWS: Release version 5.4.5
+
+2024-07-16  Serge Schneider <serge@raspberrypi.com>
+
+	* database.c: Use DB_ENV->dbrename() and DB_ENV->dbremove()
+	in database_translate_legacy_packages
+
+2024-05-16  Simon Richter <sjr@debian.org>
+
+	* database.c: Print complains about lockfile on stderr
+	When waiting for a lock, the message is printed to stdout, which messes
+	up the output for tools processing it. Print to stderr instead.
+
 2024-02-17  Bastian Germann <bage@debian.org>
 
 	* configure.ac, NEWS: Release version 5.4.4
