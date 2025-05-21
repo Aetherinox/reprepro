@@ -23,6 +23,21 @@
   - [Step 2: Create Github Repo](#step-2-create-github-repo)
   - [Step 3: Publish First Package](#step-3-publish-first-package)
   - [Step 4: Use Your New Repo](#step-4-use-your-new-repo)
+- [Commands](#commands)
+  - [Add Package](#add-package)
+    - [Specific Arcitecture](#specific-arcitecture)
+    - [All Architectures](#all-architectures)
+    - [Options](#options)
+      - [--section](#--section)
+      - [--component](#--component)
+      - [--architecture](#--architecture)
+  - [Check Package Updates](#check-package-updates)
+  - [List Packages by Name](#list-packages-by-name)
+  - [List Package by Filter](#list-package-by-filter)
+  - [List Packages for Specific Codename](#list-packages-for-specific-codename)
+  - [List Packages for Specific Section Tag](#list-packages-for-specific-section-tag)
+  - [Delete Package by Codename](#delete-package-by-codename)
+  - [Delete Package by Filter](#delete-package-by-filter)
 
 <br />
 
@@ -484,9 +499,6 @@ Now is a good time to add these newly generated keys to your [Github account](ht
 
 <p align="center"><img style="width: 80%;text-align: center;" src=".docs/img/create/2.png"></p>
 
-
-
-
 <br />
 
 After you have completed all of this, proceed to the next step [Step 2: Create Github Repo](#step-2-create-github-repo)
@@ -522,9 +534,10 @@ Create a new folder for your project:
 - `github/my-apt-repo/db`
 - `github/my-apt-repo/dists`
 - `github/my-apt-repo/pool`
+- `github/my-apt-repo/logs`
 
 ```shell
-mkdir -p github/my-apt-repo/{conf,incoming,db,dists,pool}
+mkdir -p github/my-apt-repo/{conf,incoming,db,dists,pool,logs}
 ```
 
 <br />
@@ -541,7 +554,10 @@ cat <<EOF > github/my-apt-repo/conf/distributions
     Architectures: amd64 arm64 i386 source
     Components: main
     Description: Ubuntu 24.04 (Noble) LTS
-    SignWith: BD3DC629
+    SignWith: CF3CFAE4
+    Log: logs/noble.log
+    Update: noble
+    Limit: 0
 EOF
 ```
 
@@ -566,8 +582,9 @@ Codename: noble
 Architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 24.04 (Noble Numbat)
-SignWith: BD3DC629
+SignWith: CF3CFAE4
 Log: logs/noble.log
+Update: noble
 Limit: 0
 ```
 
@@ -583,8 +600,9 @@ Codename: noble
 Architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 24.04 (Noble Numbat)
-SignWith: BD3DC629
+SignWith: CF3CFAE4
 Log: logs/noble.log
+Update: noble
 Limit: 0
 
 Origin: Aetherinox
@@ -594,8 +612,9 @@ Codename: jammy
 Architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 22.04 (Jammy Jellyfish)
-SignWith: BD3DC629
+SignWith: CF3CFAE4
 Log: logs/jammy.log
+Update: jammy
 Limit: 0
 ```
 
@@ -605,6 +624,59 @@ Limit: 0
 > The **Limit** property allows you to define how many versions of the package will be stored in your Debian repo at a time. Set this to `0` for **unlimited**. If you only want the latest version of each package, and to NOT save older versions, set `Limit: 1`
 >
 > If you set `Limit: 1`, then every time a new version of a package is added, all older copies will be deleted and cleaned from your repo.
+
+<br />
+
+Next, create `conf/updates` and add the following:
+
+```ini
+Name: focal
+Method: http://ports.ubuntu.com/ubuntu-ports/
+Suite: focal
+Architectures: source i386 amd64 arm64
+Components: main
+UDebComponents:
+VerifyRelease: blindtrust
+# VerifyRelease: CF3CFAE4|CF3CFAE4
+
+Name: jammy
+Method: http://ports.ubuntu.com/ubuntu-ports/
+Suite: jammy
+Architectures: source i386 amd64 arm64
+Components: main
+UDebComponents:
+VerifyRelease: blindtrust
+# VerifyRelease: CF3CFAE4|CF3CFAE4
+
+Name: lunar
+Method: http://ports.ubuntu.com/ubuntu-ports/
+Suite: lunar
+Architectures: source i386 amd64 arm64
+Components: main
+UDebComponents:
+VerifyRelease: blindtrust
+
+Name: mantic
+Method: http://ports.ubuntu.com/ubuntu-ports/
+Suite: mantic
+Architectures: source i386 amd64 arm64
+Components: main
+UDebComponents:
+VerifyRelease: blindtrust
+
+Name: noble
+Method: http://ports.ubuntu.com/ubuntu-ports/
+Suite: noble
+Architectures: source i386 amd64 arm64
+Components: main
+UDebComponents:
+VerifyRelease: blindtrust
+#VerifyRelease: 3F272F5B|437D05B5|8D8AEBF1|3B4FE6ACC0B21F32|871920D1991BC93C
+```
+
+<br />
+
+The `conf/updates` file will allow you to run `reprepro checkupdate noble`
 
 <br />
 
@@ -624,12 +696,14 @@ git push
 To add our first package, you need to first find a `.deb` package you want to add to your new debian repo. For this example, we'll download and add Reprepro. Make sure you are in the root folder of your new debian repository; you should see:
 
 ```console
-📁 my-apt-repo
-   📁 conf
-   📁 incoming
-   📁 db
-   📁 dists
-   📁 pool
+📁 github
+   📁 my-apt-repo
+      📁 conf
+      📁 incoming
+      📁 db
+      📁 dists
+      📁 pool
+      📁 logs
 ```
 
 <br />
@@ -637,7 +711,7 @@ To add our first package, you need to first find a `.deb` package you want to ad
 `cd` into the root folder:
 
 ```shell
-cd my-apt-repo
+cd github/my-apt-repo
 ```
 
 <br />
@@ -792,3 +866,342 @@ This concludes the basics of getting a Github hosted Debian / Ubuntu repository 
 ---
 
 <br />
+
+## Commands
+
+This is a list of the most needed commands.
+
+<br />
+
+### Add Package
+
+There are two ways you can add a package:
+1. For all arcitectures
+2. For specific arcitecture
+
+<br />
+
+#### Specific Arcitecture
+
+To add a new package to your repository database for a specific architecture. Change `amd64` to any of the following:
+
+- `amd64`
+- `arm64`
+- `i386`
+
+<br />
+
+The list of available architectures is located in `/my-apt-repo/conf/distributions`
+
+```shell
+reprepro -V \
+    --section utils \
+    --component main \
+    --priority 0 \
+    --architecture amd64 \
+    includedeb noble packagename_1.0.0_amd64.deb
+```
+
+<br />
+<br />
+
+#### All Architectures
+
+Adds a new package to your repository database for the architecture `all` .
+
+```shell
+reprepro -V \
+    --section utils \
+    --component main \
+    --priority 0 \
+    includedeb noble packagename_1.0.0_amd64.deb
+```
+
+<br />
+
+#### Options
+
+When adding a new package to your Reprepro repository, there are numerous options you can specify for the command. This section outlines what those options are:
+
+<br />
+
+##### --section
+
+The following is a list of available `sections`:
+
+| Section ID       | Desc |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| admin            | Utilities to administer system resources, manage user accounts, etc.                                                                           |
+| cli-mono         | Everything about Mono and the Common Language Infrastructure.                                                                                  |
+| comm             | Software to use your modem in the old fashioned style.                                                                                         |
+| database         | Database Servers and Clients.                                                                                                                  |
+| debian-installer | Special packages for building customized debian-installer variants. Do not install them on a normal system!                                    |
+| debug            | Packages providing debugging information for executables and shared libraries.                                                                 |
+| devel            | Development utilities, compilers, development environments, libraries, etc.                                                                    |
+| doc              | FAQs, HOWTOs and other documents trying to explain everything related to Debian, and software needed to browse documentation (man, info, etc). |
+| editors          | Software to edit files. Programming environments.                                                                                              |
+| education        | Software for learning and teaching.                                                                                                            |
+| electronics      | Electronics utilities.                                                                                                                         |
+| embedded         | Software suitable for use in embedded applications.                                                                                            |
+| fonts            | Font packages.                                                                                                                                 |
+| games            | Programs to spend a nice time with after all this setting up.                                                                                  |
+| gnome            | The GNOME desktop environment, a powerful, easy to use set of integrated applications.                                                         |
+| gnu-r            | Everything about GNU R, a statistical computation and graphics system.                                                                         |
+| gnustep          | The GNUstep environment.                                                                                                                       |
+| golang           | Go programming language, libraries, and development tools.                                                                                     |
+| graphics         | Editors, viewers, converters... Everything to become an artist.                                                                                |
+| hamradio         | Software for ham radio.                                                                                                                        |
+| haskell          | Everything about Haskell.                                                                                                                      |
+| httpd            | Web servers and their modules.                                                                                                                 |
+| interpreters     | All kind of interpreters for interpreted languages. Macro processors.                                                                          |
+| introspection    | Machine readable introspection data for use by development tools.                                                                              |
+| java             | Everything about Java.                                                                                                                         |
+| javascript       | JavaScript programming language, libraries, and development tools.                                                                             |
+| kde              | The K Desktop Environment, a powerful, easy to use set of integrated applications.                                                             |
+| kernel           | Operating System Kernels and related modules.                                                                                                  |
+| libdevel         | Libraries necessary for developers to write programs that use them.                                                                            |
+| libs             | Libraries to make other programs work. They provide special features to developers.                                                            |
+| lisp             | Everything about Lisp.                                                                                                                         |
+| localization     | Localization support for big software packages.                                                                                                |
+| mail             | Programs to route, read, and compose E-mail messages.                                                                                          |
+| math             | Math software.                                                                                                                                 |
+| metapackages     | Packages that mainly provide dependencies on other packages.                                                                                   |
+| misc             | Miscellaneous utilities that didn't fit well anywhere else.                                                                                    |
+| net              | Daemons and clients to connect your system to the world.                                                                                       |
+| news             | Software to access Usenet, to set up news servers, etc.                                                                                        |
+| ocaml            | Everything about OCaml, an ML language implementation.                                                                                         |
+| oldlibs          | Old versions of libraries, kept for backward compatibility with old applications.                                                              |
+| otherosfs        | Software to run programs compiled for other operating systems, and to use their filesystems.                                                   |
+| perl             | Everything about Perl, an interpreted scripting language.                                                                                      |
+| php              | Everything about PHP.                                                                                                                          |
+| python           | Everything about Python, an interpreted, interactive object oriented language.                                                                 |
+| ruby             | Everything about Ruby, an interpreted object oriented language.                                                                                |
+| rust             | Rust programming language and development tools.                                                                                               |
+| science          | Basic tools for scientific work.                                                                                                               |
+| shells           | Command shells. Friendly user interfaces.                                                                                                      |
+| sound            | Utilities to deal with sound: mixers, players, recorders, CD players, etc.                                                                     |
+| tasks            | Packages that are used by 'tasksel', a simple interface for users who want to configure their system to perform a specific task.               |
+| tex              | The famous typesetting software and related programs.                                                                                          |
+| text             | Utilities to format and print text documents.                                                                                                  |
+| utils            | Utilities for file/disk manipulation, backup and archive tools, system monitoring, input systems, etc.                                         |
+| vcs              | Version control systems and related utilities.                                                                                                 |
+| video            | Video viewers, editors, recording, streaming.                                                                                                  |
+| virtual          | Virtual packages.                                                                                                                              |
+| web              | Web servers, browsers, proxies, download tools etc.                                                                                            |
+| x11              | X servers, libraries, window managers, terminal emulators and many related applications.                                                       |
+| xfce             | Xfce, a fast and lightweight Desktop Environment.                                                                                              |
+| zope             | Zope Application Server and Plone Content Managment System.                                                                                                                                               |
+
+<br />
+
+##### --component
+
+When adding a new `.deb` package to your apt repo, one of the options in the command will be `component`, these are the options you have to pick from:
+
+| Component | Description |
+| --------- | ----------- |
+| `main`    | Canonical-supported free and open-source software.|
+| `universe`    | Community-maintained free and open-source software.|
+| `restricted`    | Proprietary drivers for devices.|
+| `multiverse`    | Software restricted by copyright or legal issues.|
+
+<br />
+
+To define what **Components** are available for you to use, edit your reprepro file:
+
+- `/my-apt-repo/conf/distributions`
+
+Once the file is opened, you will see the `Components` field:
+
+```ini
+Components: main
+```
+
+<br />
+
+##### --architecture
+
+Depending on context and the control file used, the architecture field can include the following sets of values:
+
+| Arch             | Desc                                           |
+| ---------------- | ---------------------------------------------- |
+| `all`            | indicates an architecture-independent package. |
+| `source`         | indicates a source package.                    |
+| `alpha`          |                                                |
+| `amd64`          | amd64 arch                                     |
+| `arc`            |                                                |
+| `arm`            |                                                |
+| `arm64`          | arm64 arch                                     |
+| `armel`          |                                                |
+| `armhf`          |                                                |
+| `avr32`          |                                                |
+| `hppa`           |                                                |
+| `hurd-i386`      |                                                |
+| `i386`           | i386 arch                                      |
+| `ia64`           |                                                |
+| `kfreebsd-amd64` |                                                |
+| `kfreebsd-i386`  |                                                |
+| `m68k`           |                                                |
+| `mips`           |                                                |
+| `mips64el`       |                                                |
+| `mipsel`         |                                                |
+| `powerpc`        |                                                |
+| `powerpcspe`     |                                                |
+| `ppc64`          |                                                |
+| `ppc64el`        |                                                |
+| `riscv64`        |                                                |
+| `s390`           |                                                |
+| `s390x`          |                                                |
+| `sh4`            |                                                |
+| `sparc`          |                                                |
+| `sparc64`        |                                                |
+| `x32`            |                                                |
+
+<br />
+
+To define what architectures are available for you to use, edit your reprepro file:
+
+- `/my-apt-repo/conf/distributions`
+
+Once the file is opened, you will see the `Architectures` field:
+
+```ini
+Architectures: amd64 arm64 i386 source
+```
+
+<br />
+<br />
+
+### Check Package Updates
+
+This allows you to check existing packages for updates against the Ubuntu repositories by running:
+
+```shell
+reprepro checkupdate noble
+```
+
+<br />
+<br />
+
+### List Packages by Name
+
+Lists all packages with a specific name; no matter what distro or architecture they are for.
+
+```shell
+reprepro ls opengist
+```
+
+<br />
+
+Response:
+
+```console
+opengist | 1.10.0 | focal | amd64, arm64, i386
+opengist | 1.10.0 | jammy | amd64, arm64, i386
+opengist |  1.7.3 | noble | amd64, arm64
+```
+
+<br />
+<br />
+
+### List Package by Filter
+
+Lists a package depending on the filters used. The following will list any packages for codename `lunar` with the section `utils`:
+
+```shell
+sudo reprepro -b . listfilter lunar 'Section (== utils)'
+```
+
+<br />
+
+To list all packages under the architecture `all` for codename `lunar`:
+
+```shell
+sudo reprepro -b . listfilter lunar 'Architecture (== all)'
+```
+
+<br />
+
+To list all packages ending with `.deb` extension for codename `lunar`:
+
+```shell
+sudo reprepro -b . listfilter lunar '$PackageType (==deb)'
+```
+
+<br />
+<br />
+
+### List Packages for Specific Codename
+
+Lists all of the added packages for a specific codename such as `noble` and `jammy`. The codenames available to use are specified in `/my-apt-repo/conf/distributions`
+
+```shell
+reprepro list noble
+```
+
+<br />
+
+Response:
+
+```console
+noble|main|amd64: adduser 3.137ubuntu1
+noble|main|arm64: adduser 3.137ubuntu1
+noble|main|i386: adduser 3.137ubuntu1
+```
+
+<br />
+<br />
+
+### List Packages for Specific Section Tag
+
+Lists all of the added packages that are flagged under a different **section** name.
+
+```shell
+sudo reprepro -b . listfilter noble 'Section (== utils)'
+```
+
+<br />
+<br />
+
+### Delete Package by Codename
+
+Deletes a package for a specific codename:
+
+```shell
+reprepro remove mantic google-chrome-stable
+reprepro remove lunar google-chrome-stable
+reprepro remove jammy google-chrome-stable
+reprepro remove focal google-chrome-stable
+
+reprepro deleteunreferenced
+reprepro dumpunreferenced
+```
+
+<br />
+<br />
+
+### Delete Package by Filter
+
+Deletes a package that meets a specific filter rule. The following deletes all packages under codename `lunar` that have the file extension `.deb`:
+
+```shell
+sudo reprepro -b . removefilter lunar '$PackageType (==deb)'
+```
+
+<br />
+
+To delete any packages for codename `lunar` with the section `utils`:
+
+```shell
+sudo reprepro -b . listfilter lunar 'Section (== utils)'
+```
+
+<br />
+
+You can then remove the references:
+
+```shell
+sudo reprepro deleteunreferenced
+sudo reprepro clearvanished
+sudo reprepro dumpunreferenced
+```
