@@ -31,6 +31,8 @@
       - [--section](#--section)
       - [--component](#--component)
       - [--architecture](#--architecture)
+      - [--priority](#--priority)
+      - [--type](#--type)
   - [Check Package Updates](#check-package-updates)
   - [List Packages by Name](#list-packages-by-name)
   - [List Package by Filter](#list-package-by-filter)
@@ -996,6 +998,8 @@ The following is a list of available `sections`:
 
 ##### --component
 
+Defining `--component` allows you to add, list or delete only for a specific component.
+
 When adding a new `.deb` package to your apt repo, one of the options in the command will be `component`, these are the options you have to pick from:
 
 | Component | Description |
@@ -1007,9 +1011,11 @@ When adding a new `.deb` package to your apt repo, one of the options in the com
 
 <br />
 
-To define what **Components** are available for you to use, edit your reprepro file:
+To define what **Components** are available for you to use, edit the reprepro file:
 
 - `/my-apt-repo/conf/distributions`
+
+<br />
 
 Once the file is opened, you will see the `Components` field:
 
@@ -1021,41 +1027,43 @@ Components: main
 
 ##### --architecture
 
+Defining `--architecture` allows you to add, list or delete only for a specific architecture.
+
 Depending on context and the control file used, the architecture field can include the following sets of values:
 
 | Arch             | Desc                                           |
 | ---------------- | ---------------------------------------------- |
-| `all`            | indicates an architecture-independent package. |
-| `source`         | indicates a source package.                    |
-| `alpha`          |                                                |
-| `amd64`          | amd64 arch                                     |
-| `arc`            |                                                |
-| `arm`            |                                                |
-| `arm64`          | arm64 arch                                     |
-| `armel`          |                                                |
-| `armhf`          |                                                |
-| `avr32`          |                                                |
-| `hppa`           |                                                |
-| `hurd-i386`      |                                                |
-| `i386`           | i386 arch                                      |
-| `ia64`           |                                                |
-| `kfreebsd-amd64` |                                                |
-| `kfreebsd-i386`  |                                                |
-| `m68k`           |                                                |
-| `mips`           |                                                |
-| `mips64el`       |                                                |
-| `mipsel`         |                                                |
-| `powerpc`        |                                                |
-| `powerpcspe`     |                                                |
-| `ppc64`          |                                                |
-| `ppc64el`        |                                                |
-| `riscv64`        |                                                |
-| `s390`           |                                                |
-| `s390x`          |                                                |
-| `sh4`            |                                                |
-| `sparc`          |                                                |
-| `sparc64`        |                                                |
-| `x32`            |                                                |
+| `all`            | Indicates architecture-independent package.    |
+| `source`         | Indicates source package.                      |
+| `alpha`          | Alpha AXP 64-bit reduced instruction set computer (RISC) instruction set architecture (ISA) developed by Digital Equipment Corporation |
+| `amd64`          | Also known as em64t or x86-64                  |
+| `arc`            | Argonaut RISC Core                             |
+| `arm`            | NetWinder, NSLU2, ...                          |
+| `arm64`          | Arm v8 64-bit systems                          |
+| `armel`          | QNAP, ?SheevaPlug, Raspberry Pi 1              |
+| `armhf`          | Arm v7 32-bit systems; for kernel support see ?DebianKernel/ARMMP |
+| `avr32`          | 32-bit RISC microcontroller architecture produced by Atmel |
+| `hppa`           | HP Precision Architecture                      |
+| `hurd-i386`      | 32-bit x86 architecture; IBM, HP, Dell         |
+| `i386`           | Original x86 platform. Now requires "686" class CPU. |
+| `ia64`           | Itanium (not Intel Core series)                |
+| `kfreebsd-amd64` | FreeBSD port to AMD’s AMD64 (Hammer) and Intel® (Yamhill) 64 architecture |
+| `kfreebsd-i386`  | Intel Pentium Pro / Pentium II (i686) or better |
+| `m68k`           | Amiga, !AtariST, very old Macintoshes, some old Sun hardware (sun3) |
+| `mips`           | Big-endian 32-bit                              |
+| `mips64el`       | Little-endian 64-bit                           |
+| `mipsel`         | Little-endian 32-bit                           |
+| `powerpc`        | Old Macintoshes                                |
+| `powerpcspe`     | IBM "e500" cores                               |
+| `ppc64`          | Old Macintoshes, IBM POWER systems             |
+| `ppc64el`        | POWER8, POWER9 systems                         |
+| `riscv64`        | Debian port for 64-bit little-endian RISC-V    |
+| `s390`           | BigIron - IBM mainframe platform               |
+| `s390x`          | Newer BigIron - IBM mainframe platform         |
+| `sh4`            | RISC processor by Hitachi; part of SuperH family. Main CPU in Sega Dreamcast console and NAOMI, NAOMI 2 and Hikaru arcade platforms. |
+| `sparc`          | Scalable Processor ARChitecture; 32-bit microprocessor by Sun Microsystems in 1987 |
+| `sparc64`        | Scalable Processor ARChitecture; 64-bit microprocessor by Sun Microsystems in 1987 |
+| `x32`            | 32-bit ABI using x86-64 (amd64) ISA.           |
 
 <br />
 
@@ -1063,11 +1071,76 @@ To define what architectures are available for you to use, edit your reprepro fi
 
 - `/my-apt-repo/conf/distributions`
 
+<br />
+
 Once the file is opened, you will see the `architectures` field:
 
 ```ini
 architectures: amd64 arm64 i386 source
 ```
+
+<br />
+
+##### --priority
+
+Each package must have a priority value, which is set in the metadata for the Debian archive and is also included in the package’s control files. This information is used to control which packages are included in standard or minimal Debian installations.
+
+<br />
+
+Most Debian packages will have a priority of `optional`. Priority levels other than optional are only used for packages that should be included by default in a standard installation of Debian.
+
+<br />
+
+The priority of a package is determined solely by the functionality it provides directly to the user. The priority of a package should not be increased merely because another higher-priority package depends on it; instead, the tools used to construct Debian installations will correctly handle package dependencies. In particular, this means that C-like libraries will almost never have a priority above optional, since they do not provide functionality directly to users. However, as an exception, the maintainers of Debian installers may request an increase of the priority of a package to resolve installation issues and ensure that the correct set of packages is included in a standard or minimal install.
+
+<br />
+
+The following priority levels are recognized by the Debian package management tools.
+
+| Priority | Description |
+| --- | --- |
+| `required` | Packages which are necessary for the proper functioning of the system (usually, this means that dpkg functionality depends on these packages). Removing a `required` package may cause your system to become totally broken and you may not even be able to use `dpkg` to put things back, so only do so if you know what you are doing.<br /><br />Systems with only the `required` packages installed have at least enough functionality for the sysadmin to boot the system and install more software. |
+| `important` | Important programs, including those which one would expect to find on any Unix-like system. If the expectation is that an experienced Unix person who found it missing would say “What on earth is going on, where is `foo`?”, it must be an `important` package. Other packages without which the system will not run well or be usable must also have priority `important`. This does not include Emacs, the X Window System, TeX or any other large applications. The `important` packages are just a bare minimum of commonly-expected and necessary tools. | 
+| `standard` | These packages provide a reasonably small but not too limited character-mode system. This is what will be installed by default if the user doesn’t select anything else. It doesn’t include many large applications. <br /><br /> Two packages that both have a priority of `standard` or higher must not conflict with each other. |
+| `optional` | This is the default priority for the majority of the archive. Unless a package should be installed by default on standard Debian systems, it should have a priority of `optional`. Packages with a priority of `optional` may conflict with each other. |
+| `extra` | _This priority is deprecated._ Use the `optional` priority instead. <br /><br />This priority should be treated as equivalent to `optional`.<br /><br />The `extra` priority was previously used for packages that conflicted with other packages and packages that were only likely to be useful to people with specialized requirements. However, this distinction was somewhat arbitrary, not consistently followed, and not useful enough to warrant the maintenance effort. |
+
+<br />
+
+The `priority` is defined when you add a package with the command:
+
+```shell
+reprepro -V \
+    --section utils \
+    --component main \
+    --priority optional \
+    --architecture amd64 \
+    includedeb noble "reprepro_5.4.7-1_amd64.deb"
+```
+
+<br />
+
+##### --type
+
+Limits the specified command to this package type only. (i.e. only list such packages, only remove such packages, only include such packages, ...). You can define the type when adding a new package:
+
+```shell
+reprepro -V \
+    --section utils \
+    --component main \
+    --priority optional \
+    --architecture amd64 \
+    --type deb \
+    includedeb noble "reprepro_5.4.7-1_amd64.deb"
+```
+
+<br />
+
+**Available options:**
+- dsc
+- deb
+- udeb
+- ddeb
 
 <br />
 <br />
