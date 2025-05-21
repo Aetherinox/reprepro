@@ -1051,8 +1051,8 @@ Depending on context and the control file used, the architecture field can inclu
 | `kfreebsd-i386`  | Intel Pentium Pro / Pentium II (i686) or better |
 | `m68k`           | Amiga, !AtariST, very old Macintoshes, some old Sun hardware (sun3) |
 | `mips`           | Big-endian 32-bit                              |
-| `mips64el`       | Little-endian 64-bit                           |
-| `mipsel`         | Little-endian 32-bit                           |
+| `mips64el`       | Little-endian 64-bit (Playstation 2)           |
+| `mipsel`         | Little-endian 32-bit (Playstation 1)           |
 | `powerpc`        | Old Macintoshes                                |
 | `powerpcspe`     | IBM "e500" cores                               |
 | `ppc64`          | Old Macintoshes, IBM POWER systems             |
