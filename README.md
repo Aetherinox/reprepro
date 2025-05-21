@@ -25,8 +25,8 @@
   - [Step 4: Use Your New Repo](#step-4-use-your-new-repo)
 - [Commands](#commands)
   - [Add Package](#add-package)
-    - [Specific Arcitecture](#specific-arcitecture)
-    - [All Architectures](#all-architectures)
+    - [Specific architecture](#specific-architecture)
+    - [All architectures](#all-architectures)
     - [Options](#options)
       - [--section](#--section)
       - [--component](#--component)
@@ -551,7 +551,7 @@ cat <<EOF > github/my-apt-repo/conf/distributions
     Label: Noble 24.04
     Suite: stable
     Codename: noble
-    Architectures: amd64 arm64 i386 source
+    architectures: amd64 arm64 i386 source
     Components: main
     Description: Ubuntu 24.04 (Noble) LTS
     SignWith: CF3CFAE4
@@ -579,7 +579,7 @@ Origin: Aetherinox
 Label: Noble Numbat 24.04 LTS
 Suite: stable
 Codename: noble
-Architectures: amd64 arm64 i386 source
+architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 24.04 (Noble Numbat)
 SignWith: CF3CFAE4
@@ -597,7 +597,7 @@ Origin: Aetherinox
 Label: Noble Numbat 24.04 LTS
 Suite: stable
 Codename: noble
-Architectures: amd64 arm64 i386 source
+architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 24.04 (Noble Numbat)
 SignWith: CF3CFAE4
@@ -609,7 +609,7 @@ Origin: Aetherinox
 Label: Jammy Jellyfish 22.04 LTS
 Suite: stable
 Codename: jammy
-Architectures: amd64 arm64 i386 source
+architectures: amd64 arm64 i386 source
 Components: main
 Description: Ubuntu 22.04 (Jammy Jellyfish)
 SignWith: CF3CFAE4
@@ -633,7 +633,7 @@ Next, create `conf/updates` and add the following:
 Name: focal
 Method: http://ports.ubuntu.com/ubuntu-ports/
 Suite: focal
-Architectures: source i386 amd64 arm64
+architectures: source i386 amd64 arm64
 Components: main
 UDebComponents:
 VerifyRelease: blindtrust
@@ -642,7 +642,7 @@ VerifyRelease: blindtrust
 Name: jammy
 Method: http://ports.ubuntu.com/ubuntu-ports/
 Suite: jammy
-Architectures: source i386 amd64 arm64
+architectures: source i386 amd64 arm64
 Components: main
 UDebComponents:
 VerifyRelease: blindtrust
@@ -651,7 +651,7 @@ VerifyRelease: blindtrust
 Name: lunar
 Method: http://ports.ubuntu.com/ubuntu-ports/
 Suite: lunar
-Architectures: source i386 amd64 arm64
+architectures: source i386 amd64 arm64
 Components: main
 UDebComponents:
 VerifyRelease: blindtrust
@@ -659,7 +659,7 @@ VerifyRelease: blindtrust
 Name: mantic
 Method: http://ports.ubuntu.com/ubuntu-ports/
 Suite: mantic
-Architectures: source i386 amd64 arm64
+architectures: source i386 amd64 arm64
 Components: main
 UDebComponents:
 VerifyRelease: blindtrust
@@ -667,7 +667,7 @@ VerifyRelease: blindtrust
 Name: noble
 Method: http://ports.ubuntu.com/ubuntu-ports/
 Suite: noble
-Architectures: source i386 amd64 arm64
+architectures: source i386 amd64 arm64
 Components: main
 UDebComponents:
 VerifyRelease: blindtrust
@@ -876,12 +876,12 @@ This is a list of the most needed commands.
 ### Add Package
 
 There are two ways you can add a package:
-1. For all arcitectures
-2. For specific arcitecture
+1. For all architecture
+2. For specific architecture
 
 <br />
 
-#### Specific Arcitecture
+#### Specific architecture
 
 To add a new package to your repository database for a specific architecture. Change `amd64` to any of the following:
 
@@ -905,7 +905,7 @@ reprepro -V \
 <br />
 <br />
 
-#### All Architectures
+#### All architectures
 
 Adds a new package to your repository database for the architecture `all` .
 
@@ -1063,10 +1063,10 @@ To define what architectures are available for you to use, edit your reprepro fi
 
 - `/my-apt-repo/conf/distributions`
 
-Once the file is opened, you will see the `Architectures` field:
+Once the file is opened, you will see the `architectures` field:
 
 ```ini
-Architectures: amd64 arm64 i386 source
+architectures: amd64 arm64 i386 source
 ```
 
 <br />
@@ -1117,7 +1117,7 @@ sudo reprepro -b . listfilter lunar 'Section (== utils)'
 To list all packages under the architecture `all` for codename `lunar`:
 
 ```shell
-sudo reprepro -b . listfilter lunar 'Architecture (== all)'
+sudo reprepro -b . listfilter lunar 'architecture (== all)'
 ```
 
 <br />
